@@ -4,6 +4,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
 
 ## 🚀 Funcionalidades
 
+
 - **Dashboard Principal**:
   - Saldo Total, Entradas (Receitas) e Saídas (Despesas).
   - Projeção de saldo mensal considerando lançamentos recorrentes ativos.
