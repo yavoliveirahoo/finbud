@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FinBud - Controle Financeiro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    
+    * {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-modal {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .active-tab {
+      color: #10b981;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-24 selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-30 glass-card border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+        <i data-lucide="wallet" class="w-5 h-5 text-slate-950 font-bold"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white leading-none">FinBud</h1>
+        <p class="text-[11px] text-slate-400 mt-0.5">S26 Ultra Edition</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button onclick="openModal('modalSettings')" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 transition active:scale-95 border border-slate-700/50" aria-label="Configurações">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-lg w-full mx-auto px-4 pt-4 space-y-5">
+
+    <!-- VIEW 1: DASHBOARD -->
+    <section id="viewDashboard" class="space-y-5">
+      <!-- SUMMARY CARD -->
+      <div class="glass-card rounded-3xl p-5 relative overflow-hidden shadow-2xl border border-emerald-500/20">
+        <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -left-8 -bottom-8 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Saldo Total Atual</p>
+        <h2 id="totalBalance" class="text-3xl font-extrabold text-white mt-1 tracking-tight">R$ 0,00</h2>
+
+        <div class="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-slate-800/80">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+              <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <p class="text-[11px] text-slate-400">Receitas</p>
+              <p id="totalIncome" class="text-sm font-semibold text-emerald-400">R$ 0,00</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <p class="text-[11px] text-slate-400">Despesas</p>
+              <p id="totalExpense" class="text-sm font-semibold text-rose-400">R$ 0,00</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800/50 flex items-center justify-between text-xs text-slate-400">
+          <span class="flex items-center gap-1.5"><i data-lucide="calculator" class="w-3.5 h-3.5 text-teal-400"></i> Projeção Recorrente Mês:</span>
+          <span id="projectedBalance" class="font-bold text-slate-200">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="openTransactionModal('income')" class="glass-card p-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800/60 active:scale-95 transition border border-emerald-500/30">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </div>
+          <span class="text-xs font-bold text-slate-200">Nova Receita</span>
+        </button>
+        <button onclick="openTransactionModal('expense')" class="glass-card p-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800/60 active:scale-95 transition border border-rose-500/30">
+          <div class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
+            <i data-lucide="minus" class="w-4 h-4"></i>
+          </div>
+          <span class="text-xs font-bold text-slate-200">Nova Despesa</span>
+        </button>
+      </div>
+
+      <!-- CHARTS SECTION -->
+      <div class="glass-card rounded-3xl p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i> Despesas por Categoria
+          </h3>
+          <span class="text-[11px] text-slate-400" id="chartMonthLabel">Mês Atual</span>
+        </div>
+        <div class="relative h-48 w-full flex items-center justify-center">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+
+      <!-- BUDGET LIMITS -->
+      <div class="glass-card rounded-3xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i data-lucide="target" class="w-4 h-4 text-teal-400"></i> Limites de Orçamento
+          </h3>
+          <button onclick="openModal('modalSettings')" class="text-[11px] text-emerald-400 font-semibold hover:underline">Ajustar</button>
+        </div>
+        <div id="budgetProgressList" class="space-y-3 pt-1">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: RECURRING -->
+    <section id="viewRecurring" class="space-y-4 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white">Assinaturas e Recorrências</h2>
+          <p class="text-xs text-slate-400">Contas fixas, diárias, semanais e anuais</p>
+        </div>
+        <button onclick="openRecurringModal()" class="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Criar
+        </button>
+      </div>
+
+      <div id="recurringList" class="space-y-3">
+        <!-- Injected dynamically -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: TRANSACTIONS FEED -->
+    <section id="viewTransactions" class="space-y-4 hidden">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white">Extrato de Movimentações</h2>
+          <span id="txCountBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">0 itens</span>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="grid grid-cols-2 gap-2">
+          <select id="filterMonth" onchange="renderTransactions()" class="glass-card text-xs text-slate-200 rounded-xl px-3 py-2.5 outline-none border border-slate-800 focus:border-emerald-500">
+            <!-- Dynamic Months -->
+          </select>
+          <select id="filterCategory" onchange="renderTransactions()" class="glass-card text-xs text-slate-200 rounded-xl px-3 py-2.5 outline-none border border-slate-800 focus:border-emerald-500">
+            <option value="ALL">Todas Categorias</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="transactionsList" class="space-y-2.5">
+        <!-- Injected dynamically -->
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAVBAR (Samsung One UI Style) -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 glass-card border-t border-slate-800/80 px-6 py-2 pb-safe flex items-center justify-around">
+    <button onclick="switchTab('viewDashboard')" id="tabDashboard" class="flex flex-col items-center gap-1 text-emerald-400 transition">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Início</span>
+    </button>
+
+    <button onclick="switchTab('viewRecurring')" id="tabRecurring" class="flex flex-col items-center gap-1 text-slate-400 transition">
+      <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Recorrentes</span>
+    </button>
+
+    <button onclick="switchTab('viewTransactions')" id="tabTransactions" class="flex flex-col items-center gap-1 text-slate-400 transition">
+      <i data-lucide="list-ordered" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Extrato</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: ADD TRANSACTION -->
+  <div id="modalTransaction" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="modalTxTitle" class="text-base font-bold text-white">Nova Transação</h3>
+        <button onclick="closeModal('modalTransaction')" class="p-1 rounded-lg text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formTransaction" onsubmit="handleSaveTransaction(event)" class="space-y-3.5">
+        <input type="hidden" id="txType" value="expense">
+
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 mb-1 block">Descrição</label>
+          <input type="text" id="txDescription" required placeholder="Ex: Supermercado, Salário" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Valor (R$)</label>
+            <input type="number" step="0.01" id="txAmount" required placeholder="0,00" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Data</label>
+            <input type="date" id="txDate" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 mb-1 block">Categoria</label>
+          <select id="txCategory" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+            <!-- Dynamic Categories -->
+          </select>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold text-slate-950 rounded-xl text-sm transition active:scale-98 shadow-lg shadow-emerald-500/20">
+          Salvar Lancamento
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RECURRING RULE -->
+  <div id="modalRecurring" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Nova Recorrência</h3>
+        <button onclick="closeModal('modalRecurring')" class="p-1 rounded-lg text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formRecurring" onsubmit="handleSaveRecurring(event)" class="space-y-3.5">
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 mb-1 block">Tipo</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-slate-800 bg-slate-900/50 cursor-pointer text-xs font-semibold text-slate-300">
+              <input type="radio" name="recType" value="income" class="accent-emerald-500"> Receita
+            </label>
+            <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-slate-800 bg-slate-900/50 cursor-pointer text-xs font-semibold text-slate-300">
+              <input type="radio" name="recType" value="expense" checked class="accent-rose-500"> Despesa
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 mb-1 block">Descrição</label>
+          <input type="text" id="recDescription" required placeholder="Ex: Netflix, Aluguel, Salário" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Valor (R$)</label>
+            <input type="number" step="0.01" id="recAmount" required placeholder="0,00" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Data de Início</label>
+            <input type="date" id="recStartDate" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Periodicidade</label>
+            <select id="recPeriodicity" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+              <option value="daily">Diário</option>
+              <option value="weekly">Semanal</option>
+              <option value="fortnightly">Quinzenal</option>
+              <option value="monthly" selected>Mensal</option>
+              <option value="yearly">Anual</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Categoria</label>
+            <select id="recCategory" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+              <!-- Dynamic -->
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold text-slate-950 rounded-xl text-sm transition active:scale-98 shadow-lg shadow-emerald-500/20">
+          Salvar Regra Recorrente
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS & BACKUP & CATEGORY CREATION -->
+  <div id="modalSettings" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="settings" class="w-4 h-4 text-emerald-400"></i> Configurações
+        </h3>
+        <button onclick="closeModal('modalSettings')" class="p-1 rounded-lg text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- SECTION: CATEGORY CREATION -->
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Criar Nova Categoria</h4>
+        <form id="formCategory" onsubmit="handleCreateCategory(event)" class="space-y-3 bg-slate-900/50 p-3.5 rounded-2xl border border-slate-800">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] text-slate-400 mb-1 block">Tipo</label>
+              <select id="catType" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-emerald-500">
+                <option value="expense">Despesa</option>
+                <option value="income">Receita</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400 mb-1 block">Nome</label>
+              <input type="text" id="catName" required placeholder="Ex: Pet, Investimento" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-emerald-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] text-slate-400 mb-1 block">Ícone</label>
+              <select id="catIcon" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-emerald-500">
+                <option value="shopping-bag">Sacola de Compras</option>
+                <option value="utensils">Alimentação</option>
+                <option value="car">Transporte</option>
+                <option value="home">Moradia</option>
+                <option value="film">Lazer</option>
+                <option value="heart-pulse">Saúde</option>
+                <option value="graduation-cap">Educação</option>
+                <option value="dollar-sign">Dinheiro/Salário</option>
+                <option value="briefcase">Trabalho</option>
+                <option value="dog">Pets</option>
+                <option value="plane">Viagens</option>
+                <option value="smartphone">Tecnologia</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400 mb-1 block">Orçamento Mensal (R$)</label>
+              <input type="number" step="0.01" id="catBudget" placeholder="Opcional" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-emerald-500">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-2 bg-slate-800 hover:bg-slate-700 font-bold text-emerald-400 rounded-xl text-xs transition border border-emerald-500/30">
+            Adicionar Categoria
+          </button>
+        </form>
+      </div>
+
+      <!-- SECTION: EXISTING CATEGORIES -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Categorias Cadastradas</h4>
+        <div id="settingsCategoryList" class="max-h-40 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- SECTION: BACKUP & RESTORE -->
+      <div class="space-y-3 pt-2 border-t border-slate-800">
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Backups e Importação</h4>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportBackup()" class="glass-card p-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-700/60">
+            <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i> Exportar JSON
+          </button>
+          
+          <label class="glass-card p-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-700/60 cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4 text-teal-400"></i> Importar JSON
+            <input type="file" id="fileImport" accept=".json" onchange="importBackup(event)" class="hidden">
+          </label>
+        </div>
+
+        <button onclick="resetData()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-xl text-xs border border-rose-500/20 transition">
+          Resetar Todos os Dados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // DEFAULT INITIAL STATE
+    const DEFAULT_CATEGORIES = [
+      { id: 'cat-1', name: 'Alimentação', type: 'expense', icon: 'utensils', budget: 1500 },
+      { id: 'cat-2', name: 'Transporte', type: 'expense', icon: 'car', budget: 600 },
+      { id: 'cat-3', name: 'Moradia', type: 'expense', icon: 'home', budget: 2000 },
+      { id: 'cat-4', name: 'Lazer', type: 'expense', icon: 'film', budget: 500 },
+      { id: 'cat-5', name: 'Saúde', type: 'expense', icon: 'heart-pulse', budget: 400 },
+      { id: 'cat-6', name: 'Salário', type: 'income', icon: 'dollar-sign', budget: 0 },
+      { id: 'cat-7', name: 'Freelance', type: 'income', icon: 'briefcase', budget: 0 }
+    ];
+
+    let state = {
+      transactions: [],
+      recurring: [],
+      categories: [...DEFAULT_CATEGORIES]
+    };
+
+    let chartInstance = null;
+
+    // LOCAL STORAGE HANDLERS
+    function loadState() {
+      const saved = localStorage.getItem('finbud_state_s26');
+      if (saved) {
+        try {
+          state = JSON.parse(saved);
+        } catch(e) {
+          console.error("Erro ao carregar dados", e);
+        }
+      } else {
+        // Seed demo items if empty
+        state.transactions = [
+          { id: 't1', description: 'Supermercado Central', amount: 350.50, type: 'expense', date: new Date().toISOString().split('T')[0], category: 'Alimentação' },
+          { id: 't2', description: 'Salário Mensal', amount: 5500.00, type: 'income', date: new Date().toISOString().split('T')[0], category: 'Salário' }
+        ];
+        state.recurring = [
+          { id: 'r1', description: 'Assinatura Netflix', amount: 55.90, type: 'expense', periodicity: 'monthly', startDate: '2026-01-10', category: 'Lazer', active: true },
+          { id: 'r2', description: 'Academia', amount: 110.00, type: 'expense', periodicity: 'monthly', startDate: '2026-01-05', category: 'Saúde', active: true }
+        ];
+        saveState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('finbud_state_s26', JSON.stringify(state));
+      renderAll();
+    }
+
+    // NAVIGATION
+    function switchTab(viewId) {
+      ['viewDashboard', 'viewRecurring', 'viewTransactions'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(viewId).classList.remove('hidden');
+
+      // Update Nav Highlights
+      const tabs = {
+        'viewDashboard': 'tabDashboard',
+        'viewRecurring': 'tabRecurring',
+        'viewTransactions': 'tabTransactions'
+      };
+
+      Object.keys(tabs).forEach(id => {
+        const btn = document.getElementById(tabs[id]);
+        if (id === viewId) {
+          btn.className = "flex flex-col items-center gap-1 text-emerald-400 transition font-bold";
+        } else {
+          btn.className = "flex flex-col items-center gap-1 text-slate-400 transition";
+        }
+      });
+
+      if (viewId === 'viewDashboard') renderChart();
+    }
+
+    // MODAL CONTROL
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      if (id === 'modalSettings') renderSettingsCategories();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function openTransactionModal(type) {
+      document.getElementById('txType').value = type;
+      document.getElementById('modalTxTitle').innerText = type === 'income' ? 'Nova Receita' : 'Nova Despesa';
+      document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+      
+      // Populate Categories Select
+      const catSelect = document.getElementById('txCategory');
+      catSelect.innerHTML = state.categories
+        .filter(c => c.type === type)
+        .map(c => `<option value="${c.name}">${c.name}</option>`)
+        .join('');
+
+      openModal('modalTransaction');
+    }
+
+    function openRecurringModal() {
+      document.getElementById('recStartDate').value = new Date().toISOString().split('T')[0];
+      const catSelect = document.getElementById('recCategory');
+      catSelect.innerHTML = state.categories
+        .map(c => `<option value="${c.name}">${c.name} (${c.type === 'income' ? 'Receita' : 'Despesa'})</option>`)
+        .join('');
+      openModal('modalRecurring');
+    }
+
+    // FORM HANDLERS
+    function handleSaveTransaction(e) {
+      e.preventDefault();
+      const newTx = {
+        id: 'tx-' + Date.now(),
+        description: document.getElementById('txDescription').value,
+        amount: parseFloat(document.getElementById('txAmount').value),
+        type: document.getElementById('txType').value,
+        date: document.getElementById('txDate').value,
+        category: document.getElementById('txCategory').value
+      };
+
+      state.transactions.unshift(newTx);
+      saveState();
+      closeModal('modalTransaction');
+      document.getElementById('formTransaction').reset();
+    }
+
+    function handleSaveRecurring(e) {
+      e.preventDefault();
+      const recTypes = document.getElementsByName('recType');
+      let selectedType = 'expense';
+      recTypes.forEach(r => { if(r.checked) selectedType = r.value; });
+
+      const newRec = {
+        id: 'rec-' + Date.now(),
+        description: document.getElementById('recDescription').value,
+        amount: parseFloat(document.getElementById('recAmount').value),
+        type: selectedType,
+        periodicity: document.getElementById('recPeriodicity').value,
+        startDate: document.getElementById('recStartDate').value,
+        category: document.getElementById('recCategory').value,
+        active: true
+      };
+
+      state.recurring.unshift(newRec);
+      saveState();
+      closeModal('modalRecurring');
+      document.getElementById('formRecurring').reset();
+    }
+
+    function handleCreateCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('catName').value.trim();
+      const type = document.getElementById('catType').value;
+      const icon = document.getElementById('catIcon').value;
+      const budget = parseFloat(document.getElementById('catBudget').value) || 0;
+
+      if (!name) return;
+
+      const newCat = {
+        id: 'cat-' + Date.now(),
+        name,
+        type,
+        icon,
+        budget
+      };
+
+      state.categories.push(newCat);
+      saveState();
+      document.getElementById('formCategory').reset();
+      renderSettingsCategories();
+    }
+
+    function deleteCategory(id) {
+      state.categories = state.categories.filter(c => c.id !== id);
+      saveState();
+      renderSettingsCategories();
+    }
+
+    function deleteTransaction(id) {
+      state.transactions = state.transactions.filter(t => t.id !== id);
+      saveState();
+    }
+
+    function toggleRecurringActive(id) {
+      const item = state.recurring.find(r => r.id === id);
+      if (item) {
+        item.active = !item.active;
+        saveState();
+      }
+    }
+
+    function deleteRecurring(id) {
+      state.recurring = state.recurring.filter(r => r.id !== id);
+      saveState();
+    }
+
+    function logRecurringAsTransaction(id) {
+      const rec = state.recurring.find(r => r.id === id);
+      if (!rec) return;
+
+      const newTx = {
+        id: 'tx-' + Date.now(),
+        description: `${rec.description} (Recorrente)`,
+        amount: rec.amount,
+        type: rec.type,
+        date: new Date().toISOString().split('T')[0],
+        category: rec.category
+      };
+
+      state.transactions.unshift(newTx);
+      saveState();
+      alert(`Lançamento "${rec.description}" registrado com sucesso no extrato!`);
+    }
+
+    // CALCULATIONS & COMPUTATIONS
+    function computeTotals() {
+      let income = 0;
+      let expense = 0;
+
+      state.transactions.forEach(t => {
+        if (t.type === 'income') income += t.amount;
+        else expense += t.amount;
+      });
+
+      const balance = income - expense;
+
+      // Projected calculation with active recurring items for current month
+      let recurringNet = 0;
+      state.recurring.filter(r => r.active).forEach(r => {
+        let mult = 1;
+        if (r.periodicity === 'daily') mult = 30;
+        else if (r.periodicity === 'weekly') mult = 4;
+        else if (r.periodicity === 'fortnightly') mult = 2;
+        else if (r.periodicity === 'yearly') mult = 1/12;
+
+        const val = r.amount * mult;
+        if (r.type === 'income') recurringNet += val;
+        else recurringNet -= val;
+      });
+
+      return {
+        balance,
+        income,
+        expense,
+        projected: balance + recurringNet
+      };
+    }
+
+    // RENDERERS
+    function renderDashboard() {
+      const totals = computeTotals();
+      
+      document.getElementById('totalBalance').innerText = formatCurrency(totals.balance);
+      document.getElementById('totalIncome').innerText = formatCurrency(totals.income);
+      document.getElementById('totalExpense').innerText = formatCurrency(totals.expense);
+      document.getElementById('projectedBalance').innerText = formatCurrency(totals.projected);
+
+      // Render Category Budgets
+      const budgetContainer = document.getElementById('budgetProgressList');
+      budgetContainer.innerHTML = '';
+
+      const expenseCategories = state.categories.filter(c => c.type === 'expense' && c.budget > 0);
+
+      if (expenseCategories.length === 0) {
+        budgetContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-2">Nenhum orçamento configurado.</p>`;
+      } else {
+        expenseCategories.forEach(cat => {
+          const spent = state.transactions
+            .filter(t => t.type === 'expense' && t.category === cat.name)
+            .reduce((sum, t) => sum + t.amount, 0);
+
+          const percent = Math.min(Math.round((spent / cat.budget) * 100), 100);
+          let barColor = 'bg-emerald-500';
+          if (percent >= 100) barColor = 'bg-rose-500';
+          else if (percent >= 80) barColor = 'bg-amber-500';
+
+          budgetContainer.innerHTML += `
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-300 font-medium">${cat.name}</span>
+                <span class="text-slate-400">${formatCurrency(spent)} / <span class="text-slate-200 font-semibold">${formatCurrency(cat.budget)}</span></span>
+              </div>
+              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      
+      // Group expenses by category
+      const expenseMap = {};
+      state.transactions
+        .filter(t => t.type === 'expense')
+        .forEach(t => {
+          expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
+        });
+
+      const labels = Object.keys(expenseMap);
+      const data = Object.values(expenseMap);
+
+      if (chartInstance) chartInstance.destroy();
+
+      if (labels.length === 0) {
+        ctx.clearRect(0, 0, 300, 200);
+        return;
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#10b981', '#f43f5e', '#3b82f6', '#f59e0b', 
+              '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                color: '#94a3b8',
+                font: { size: 11, family: 'Plus Jakarta Sans' },
+                boxWidth: 12
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+
+    function renderRecurring() {
+      const container = document.getElementById('recurringList');
+      container.innerHTML = '';
+
+      if (state.recurring.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">Nenhuma regra recorrente cadastrada.</p>`;
+        return;
+      }
+
+      const labelPeriod = {
+        'daily': 'Diário',
+        'weekly': 'Semanal',
+        'fortnightly': 'Quinzenal',
+        'monthly': 'Mensal',
+        'yearly': 'Anual'
+      };
+
+      state.recurring.forEach(rec => {
+        const isIncome = rec.type === 'income';
+        const badgeColor = isIncome ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10';
+
+        container.innerHTML += `
+          <div class="glass-card p-3.5 rounded-2xl flex items-center justify-between border border-slate-800 ${!rec.active ? 'opacity-50' : ''}">
+            <div class="flex items-center gap-3">
+              <button onclick="toggleRecurringActive('${rec.id}')" class="w-9 h-9 rounded-xl flex items-center justify-center ${badgeColor}">
+                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
+              </button>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-xs font-bold text-slate-200">${rec.description}</h4>
+                  <span class="text-[10px] px-2 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">${labelPeriod[rec.periodicity]}</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">${rec.category} • Início: ${formatDate(rec.startDate)}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="text-right">
+                <p class="text-xs font-extrabold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(rec.amount)}</p>
+              </div>
+              <button onclick="logRecurringAsTransaction('${rec.id}')" title="Lançar agora" class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 active:scale-95">
+                <i data-lucide="check" class="w-4 h-4"></i>
+              </button>
+              <button onclick="deleteRecurring('${rec.id}')" title="Excluir" class="p-2 rounded-lg text-slate-500 hover:text-rose-400 active:scale-95">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+
+    function renderTransactions() {
+      const container = document.getElementById('transactionsList');
+      const monthFilter = document.getElementById('filterMonth').value;
+      const catFilter = document.getElementById('filterCategory').value;
+
+      let filtered = [...state.transactions];
+
+      if (monthFilter && monthFilter !== 'ALL') {
+        filtered = filtered.filter(t => t.date.startsWith(monthFilter));
+      }
+
+      if (catFilter && catFilter !== 'ALL') {
+        filtered = filtered.filter(t => t.category === catFilter);
+      }
+
+      document.getElementById('txCountBadge').innerText = `${filtered.length} itens`;
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">Nenhum lançamento encontrado.</p>`;
+        return;
+      }
+
+      filtered.forEach(t => {
+        const isIncome = t.type === 'income';
+        container.innerHTML += `
+          <div class="glass-card p-3 rounded-2xl flex items-center justify-between border border-slate-800/80 hover:bg-slate-800/40 transition">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center ${isIncome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-200">${t.description}</h4>
+                <p class="text-[10px] text-slate-400">${t.category} • ${formatDate(t.date)}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <p class="text-xs font-bold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">
+                ${isIncome ? '+' : '-'} ${formatCurrency(t.amount)}
+              </p>
+              <button onclick="deleteTransaction('${t.id}')" class="text-slate-600 hover:text-rose-400 p-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+
+    function renderSettingsCategories() {
+      const container = document.getElementById('settingsCategoryList');
+      container.innerHTML = '';
+
+      state.categories.forEach(c => {
+        container.innerHTML += `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
+            <div class="flex items-center gap-2">
+              <i data-lucide="${c.icon || 'tag'}" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span class="text-slate-200 font-medium">${c.name}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 uppercase">${c.type === 'income' ? 'Receita' : 'Despesa'}</span>
+            </div>
+            <button onclick="deleteCategory('${c.id}')" class="text-slate-500 hover:text-rose-400 p-1">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+
+    function populateFilterSelectors() {
+      const monthSelect = document.getElementById('filterMonth');
+      const catSelect = document.getElementById('filterCategory');
+
+      // Extract Unique Months
+      const months = Array.from(new Set(state.transactions.map(t => t.date.substring(0, 7)))).sort().reverse();
+      monthSelect.innerHTML = `<option value="ALL">Todos os Meses</option>` + 
+        months.map(m => `<option value="${m}">${m}</option>`).join('');
+
+      // Extract Categories
+      catSelect.innerHTML = `<option value="ALL">Todas Categorias</option>` + 
+        state.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    }
+
+    // BACKUP & EXPORT/IMPORT
+    function exportBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `finbud_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.transactions && imported.categories) {
+            state = imported;
+            saveState();
+            closeModal('modalSettings');
+            alert('Backup restaurado com sucesso!');
+          } else {
+            alert('Arquivo JSON inválido.');
+          }
+        } catch(err) {
+          alert('Erro ao carregar o arquivo JSON.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetData() {
+      if (confirm('Tem certeza que deseja apagar todos os dados?')) {
+        localStorage.removeItem('finbud_state_s26');
+        location.reload();
+      }
+    }
+
+    // UTILS
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length < 3) return dateStr;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderRecurring();
+      populateFilterSelectors();
+      renderTransactions();
+      lucide.createIcons();
+    }
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      renderAll();
+      switchTab('viewDashboard');
+    });
+  </script>
+</body>
+</html>
