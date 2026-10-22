@@ -27,7 +27,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
 - **Ícones (emojis) nos lançamentos**: escolha um ícone ao criar/editar lançamentos e recorrências em um painel de emojis estilo WhatsApp (rolagem contínua, abas por categoria, busca, recentes e sugestão automática pela descrição). Aparece no extrato, nas recorrências e no calendário do dia.
 
 - **Configurações Personalizadas**:
-  - **Gestão de Categorias**: criar, **editar** (nome, ícone e limite) e excluir categorias. Renomear atualiza os lançamentos e recorrências.
+  - **Gestão de Categorias**: criar, **editar** (nome, ícone e limite; o ícone é escolhido visualmente, entre ícones do app e emojis) e excluir categorias. Renomear atualiza os lançamentos e recorrências.
   - **Backup & Importação**: Exportação e importação de dados em formato JSON.
   - **Reset de Dados**: Opção para restaurar configurações iniciais.
 

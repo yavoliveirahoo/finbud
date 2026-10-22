@@ -599,20 +599,10 @@
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="text-[11px] text-slate-400 mb-1 block">Ícone</label>
-              <select id="catIcon" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-emerald-500">
-                <option value="shopping-bag">Sacola de Compras</option>
-                <option value="utensils">Alimentação</option>
-                <option value="car">Transporte</option>
-                <option value="home">Moradia</option>
-                <option value="film">Lazer</option>
-                <option value="heart-pulse">Saúde</option>
-                <option value="graduation-cap">Educação</option>
-                <option value="dollar-sign">Dinheiro/Salário</option>
-                <option value="briefcase">Trabalho</option>
-                <option value="dog">Pets</option>
-                <option value="plane">Viagens</option>
-                <option value="smartphone">Tecnologia</option>
-              </select>
+              <input type="hidden" id="catIcon" value="shopping-bag">
+              <button type="button" id="catIconBtn" onclick="openEmojiPicker('cat')" class="w-full h-[38px] bg-slate-900 border border-slate-800 rounded-xl px-3 flex items-center justify-between text-xs text-slate-300 active:scale-95 transition">
+                <span class="icon-cur flex items-center text-emerald-400"></span><span class="text-slate-500">Escolher</span>
+              </button>
             </div>
             <div>
               <label class="text-[11px] text-slate-400 mb-1 block">Orçamento Mensal (R$)</label>
@@ -692,8 +682,11 @@
           <input type="text" id="catEditName" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500">
         </div>
         <div>
-          <label for="catEditIcon" class="text-xs font-medium text-slate-400 mb-1 block">Ícone</label>
-          <select id="catEditIcon" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500"></select>
+          <label class="text-xs font-medium text-slate-400 mb-1 block">Ícone</label>
+          <input type="hidden" id="catEditIcon" value="tag">
+          <button type="button" id="catEditIconBtn" onclick="openEmojiPicker('catEdit')" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-sm text-slate-100 active:scale-95 transition">
+            <span class="icon-cur flex items-center text-emerald-400"></span><span class="text-xs text-slate-500">Escolher</span>
+          </button>
         </div>
         <div id="catEditBudgetWrap">
           <label for="catEditBudget" class="text-xs font-medium text-slate-400 mb-1 block">Limite mensal (R$)</label>
@@ -942,6 +935,24 @@
       { id: 'objects', icon: '💡', label: 'Objetos',    list: "💡️ 💢️ 💣️ 💤️ 💥️ 💦️ 💧️ 💨️ 💩️ 💪️ 💫️ 💬️ 💭️ 💮️ 💯️ 💰️ 💱️ 💲️ 💳️ 💴️ 💵️ 💶️ 💷️ 💸️ 💹️ 💺️ 💻️ 💼️ 💽️ 💾️ 💿️ 📀️ 📁️ 📂️ 📃️ 📄️ 📅️ 📆️ 📇️ 📈️ 📉️ 📊️ 📋️ 📌️ 📍️ 📎️ 📏️ 📐️ 📑️ 📒️ 📓️ 📔️ 📕️ 📖️ 📗️ 📘️ 📙️ 📚️ 📛️ 📜️ 📝️ 📞️ 📟️ 📠️ 📡️ 📢️ 📣️ 📤️ 📥️ 📦️ 📧️ 📨️ 📩️ 📪️ 📫️ 📬️ 📭️ 📮️ 📯️ 📰️ 📱️ 📲️ 📳️ 📴️ 📵️ 📶️ 📷️ 📸️ 📹️ 📺️ 📻️ 📼️ 🔊️ 🔋️ 🔌️ 🔍️ 🔎️ 🔏️ 🔐️ 🔑️ 🔒️ 🔓️ 🔔️ 🔕️ 🔖️ 🔗️ 🔘️ 🔙️ 🔚️ 🔛️ 🔜️ 🔝️ 🔞️ 🔟️ 🔠️ 🔡️ 🔢️ 🔣️ 🔤️ 🔥️ 🔦️ 🔧️ 🔨️ 🔩️ 🔪️ 🔫️ 🔬️ 🔭️ 🔮️ ⌚️ ⌛️ 🖥️ 🧠️ 🧡️ 🧢️ 🧣️ 🧤️ 🧥️ 🧦️ 🧧️ 🧨️ 🧩️ 🧪️ 🧫️ 🧬️ 🧭️ 🧮️ 🧯️ 🧰️ 🧱️ 🧲️ 🧳️ 🧴️ 🧵️ 🧶️ 🧷️ 🧸️ 🧹️ 🧺️ 🧻️ 🧼️ 🧽️ 🧾️ 🧿️ 👔️ 👕️ 👖️ 👗️ 👘️ 👙️ 👚️ 👛️ 👜️ 👝️ 👞️ 👟️ 👠️ 👡️ 👢️ 🎩️ 👑️ 👒️ 👓️ 🎒️ 🎓️ 🎖️ 🎗️" },
       { id: 'symbols', icon: '❤️', label: 'Símbolos',   list: "💓️ 💔️ 💕️ 💖️ 💗️ 💘️ 💙️ 💚️ 💛️ 💜️ 💝️ 💞️ 💟️ ❤️ 🖤️ 🤍️ 🤎️ ✅️ ❌️ ⭐️ ✨️ 💯️ 💢️ 💣️ 💤️ 💥️ ⚠️ 🚫️ 🔞️ ❗️ ❓️ 💤️ ♻️ 🔴️ 🔵️ 🟠️ 🟡️ 🟢️ 🔶️ 🔷️ 🔸️ 🔹️ 🔺️ 🔻️ 🔼️ 🔽️" }
     ].map(g => ({ ...g, items: g.list.split(' ') }));
+    const APP_ICONS = 'shopping-bag shopping-cart utensils coffee pizza beer wine cake car bus fuel bike plane truck home sofa bed-double lightbulb droplet flame wifi zap phone smartphone laptop tv camera film music gamepad-2 party-popper palette book-open graduation-cap briefcase wrench hammer scissors shirt gift baby dog cat sprout umbrella sun moon star heart heart-pulse pill stethoscope dumbbell dollar-sign wallet credit-card piggy-bank landmark trending-up percent receipt shield-check map-pin mail tag'.split(' ');
+
+    // categoria: ícone do app (nome Lucide) ou emoji
+    function iconHtml(v, cls) {
+      v = v || 'tag';
+      return /^[a-z0-9-]+$/.test(v)
+        ? `<i data-lucide="${esc(v)}" class="${cls}"></i>`
+        : `<span class="emo leading-none ${/w-4/.test(cls) ? 'text-base' : 'text-xl'}" aria-hidden="true">${esc(v)}</span>`;
+    }
+    function setCatIcon(target, v) {
+      v = v || 'tag';
+      document.getElementById(target + 'Icon').value = v;
+      const cur = document.querySelector('#' + target + 'IconBtn .icon-cur');
+      if (cur) cur.innerHTML = iconHtml(v, 'w-5 h-5');
+      refreshIcons();
+    }
+    const isCatTarget = t => t === 'cat' || t === 'catEdit';
+
     const EMOJI_RECENT_KEY = 'finbud_emoji_recent';
     let emojiTarget = 'tx';
 
@@ -1008,13 +1019,21 @@
     }
 
     function pickEmoji(e) {
-      if (e) pushRecentEmoji(e);
-      setEmoji(emojiTarget, e);
+      e = e || '';
+      if (isCatTarget(emojiTarget)) {
+        if (e && !e.startsWith('lucide:')) pushRecentEmoji(e);
+        setCatIcon(emojiTarget, e.startsWith('lucide:') ? e.slice(7) : (e || 'tag'));
+      } else {
+        if (e) pushRecentEmoji(e);
+        setEmoji(emojiTarget, e);
+      }
       closeModal('modalEmoji');
     }
 
     function emojiButtons(list) {
-      return list.map(e => `<button type="button" data-e="${esc(e)}" onclick="pickEmoji(this.dataset.e)" class="emo h-10 rounded-xl text-[26px] leading-none hover:bg-slate-800 active:scale-90 transition">${esc(e)}</button>`).join('');
+      return list.map(e => e.startsWith('lucide:')
+        ? `<button type="button" data-e="${esc(e)}" onclick="pickEmoji(this.dataset.e)" aria-label="${esc(e.slice(7))}" class="h-10 rounded-xl flex items-center justify-center text-slate-300 hover:bg-slate-800 active:scale-90 transition"><i data-lucide="${esc(e.slice(7))}" class="w-6 h-6"></i></button>`
+        : `<button type="button" data-e="${esc(e)}" onclick="pickEmoji(this.dataset.e)" class="emo h-10 rounded-xl text-[26px] leading-none hover:bg-slate-800 active:scale-90 transition">${esc(e)}</button>`).join('');
     }
 
     // seções do seletor: Recentes, "Finanças e dia a dia" (com títulos) e o banco completo
@@ -1022,6 +1041,7 @@
       const recents = getRecentEmojis();
       const secs = [];
       if (recents.length) secs.push({ id: 'recent', icon: '🕘', label: 'Recentes', blocks: [{ title: 'Usados recentemente', items: recents }] });
+      if (isCatTarget(emojiTarget)) secs.unshift({ id: 'app', icon: '🧩', label: 'Ícones do app', blocks: [{ title: 'Ícones do app', items: APP_ICONS.map(n => 'lucide:' + n) }] });
       secs.push({ id: 'mine', icon: '⭐', label: 'Finanças e dia a dia', blocks: EMOJI_GROUPS.map(g => ({ title: g.label, items: g.items.map(x => x[0]) })) });
       EMOJI_FULL.forEach(g => secs.push({ id: g.id, icon: g.icon, label: g.label, blocks: [{ title: g.label, items: g.items }] }));
       return secs;
@@ -1073,6 +1093,7 @@
       grid.innerHTML = secs.map(sc =>
         `<div data-sec="${sc.id}">` + sc.blocks.map(b =>
           `<h4 class="sticky top-0 z-10 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400" style="background:var(--modal)">${esc(b.title)}</h4><div class="${cols}">${emojiButtons(b.items)}</div>`).join('') + '</div>').join('');
+      refreshIcons();
       emojiSpy();
     }
 
@@ -1239,6 +1260,7 @@
       state.categories.push({ id: 'cat-' + Date.now(), name, type, icon, budget: Math.max(0, budget) });
       saveState();
       document.getElementById('formCategory').reset();
+      setCatIcon('cat', 'shopping-bag');
       renderSettingsCategories();
       showToast('Categoria criada.');
     }
@@ -1610,7 +1632,7 @@
         return `
           <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
             <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
-              <i data-lucide="${esc(c.icon || 'tag')}" class="w-4 h-4"></i>
+              ${iconHtml(c.icon, 'w-4 h-4')}
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-slate-100 truncate">${esc(c.name)}</p>
@@ -1791,7 +1813,7 @@
       list.innerHTML = cats.map(c => `
         <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
           <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
-            <i data-lucide="${esc(c.icon || 'tag')}" class="w-4 h-4"></i>
+            ${iconHtml(c.icon, 'w-4 h-4')}
           </div>
           <div class="flex-1 min-w-0">
             <label for="bud-${esc(c.id)}" class="block text-sm font-semibold text-slate-100 truncate">${esc(c.name)}</label>
@@ -1832,12 +1854,7 @@
       const c = state.categories.find(x => x.id === id);
       if (!c) return;
       const isExp = c.type === 'expense';
-      const sel = document.getElementById('catEditIcon');
-      sel.innerHTML = document.getElementById('catIcon').innerHTML;
-      if (c.icon && ![...sel.options].some(o => o.value === c.icon)) {
-        sel.insertAdjacentHTML('afterbegin', `<option value="${esc(c.icon)}">${esc(c.icon)}</option>`);
-      }
-      sel.value = c.icon;
+      setCatIcon('catEdit', c.icon || 'tag');
       document.getElementById('catEditId').value = c.id;
       document.getElementById('catEditName').value = c.name;
       document.getElementById('catEditType').innerText = isExp ? 'Despesa' : 'Receita';
@@ -2223,6 +2240,7 @@
       setupGlobalHandlers();
       loadState();
       renderAll();
+      setCatIcon('cat', 'shopping-bag');
       switchTab('viewDashboard');
     });
   </script>
