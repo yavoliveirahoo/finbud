@@ -66,6 +66,11 @@
       --legend: #475569;
       color-scheme: light;
     }
+    html.light { --card-b: rgba(6, 95, 70, 0.5); --modal-b: rgba(6, 95, 70, 0.6); }
+    html.light [class*="border-slate-800"] { border-color: rgba(6, 95, 70, 0.28); }
+    html.light .glass-card { border-color: var(--card-b); }
+    html.light .glass-modal { border-color: var(--modal-b); }
+    html.light #calendarCard { background: #ecfdf5; }
     html.light .glass-card { box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 6px 18px -8px rgba(15, 23, 42, .10); }
     html.light .shadow-2xl { box-shadow: 0 14px 34px -14px rgba(15, 23, 42, .22); }
     html.light .text-emerald-400, html.light .text-emerald-300 { color: #047857; }
@@ -714,21 +719,22 @@
 
   <!-- AVISOS (toasts) -->
   <!-- MODAL: EMOJI PICKER -->
-  <div id="modalEmoji" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
-    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-4 pb-5 max-h-[78vh] flex flex-col gap-3">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-ink">Escolha um ícone</h3>
-        <button onclick="closeModal('modalEmoji')" class="p-1 rounded-lg text-slate-400 hover:text-ink" aria-label="Fechar">
+  <div id="modalEmoji" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl pt-3 h-[64vh] flex flex-col overflow-hidden">
+      <div class="px-3 pb-2 flex items-center gap-2">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input type="search" id="emojiSearch" oninput="renderEmojiPicker()" placeholder="Pesquisar emoji" autocomplete="off" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+        </div>
+        <button type="button" onclick="pickEmoji('')" aria-label="Sem ícone" title="Sem ícone" class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 active:scale-95 transition">
+          <i data-lucide="ban" class="w-5 h-5"></i>
+        </button>
+        <button onclick="closeModal('modalEmoji')" class="p-2.5 rounded-xl text-slate-400 hover:text-ink" aria-label="Fechar">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        <input type="search" id="emojiSearch" oninput="renderEmojiPicker()" placeholder="Buscar: mercado, uber, aluguel…" autocomplete="off" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
-      </div>
-      <div id="emojiTabs" class="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1"></div>
-      <div id="emojiGrid" class="overflow-y-auto no-scrollbar grid grid-cols-7 gap-1 min-h-[168px] content-start"></div>
-      <button type="button" onclick="pickEmoji('')" class="w-full py-2.5 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800/60 border border-slate-700/60 active:scale-95 transition">Sem ícone</button>
+      <div id="emojiGrid" onscroll="emojiSpy()" class="relative flex-1 overflow-y-auto no-scrollbar px-3"></div>
+      <div id="emojiTabs" class="flex items-center justify-between gap-0.5 px-2 pt-1.5 pb-safe border-t border-slate-800"></div>
     </div>
   </div>
 
@@ -926,9 +932,18 @@
         ['🎂','aniversario'],['📌','outros diversos'],['⭐','favorito'],['🔄','assinatura recorrente mensalidade'],
         ['🛡️','seguro'],['📬','correio'],['🔒','cofre']] }
     ];
+    const EMOJI_FULL = [
+      { id: 'faces',   icon: '😀', label: 'Rostos',     list: "😀️ 😁️ 😂️ 😃️ 😄️ 😅️ 😆️ 😇️ 😈️ 😉️ 😊️ 😋️ 😌️ 😍️ 😎️ 😏️ 😐️ 😑️ 😒️ 😓️ 😔️ 😕️ 😖️ 😗️ 😘️ 😙️ 😚️ 😛️ 😜️ 😝️ 😞️ 😟️ 😠️ 😡️ 😢️ 😣️ 😤️ 😥️ 😦️ 😧️ 😨️ 😩️ 😪️ 😫️ 😬️ 😭️ 😮️ 😯️ 😰️ 😱️ 😲️ 😳️ 😴️ 😵️ 😶️ 😷️ 🙁️ 🙂️ 🙃️ 🙄️ 🤐️ 🤑️ 🤒️ 🤓️ 🤔️ 🤕️ 🤗️ 🤠️ 🤡️ 🤢️ 🤣️ 🤤️ 🤥️ 🤧️ 🤨️ 🤩️ 🤪️ 🤫️ 🤬️ 🤭️ 🤮️ 🤯️ 🥰️ 🥳️ 🥴️ 🥵️ 🥶️ 🥺️ 🧐️ 😈️ 👿️ 💩️ 👻️ 💀️ 👽️ 🤖️ 🙈️ 🙉️ 🙊️" },
+      { id: 'hands',   icon: '👍', label: 'Gestos e pessoas', list: "👋️ 🤚️ ✋️ 🖖️ 👌️ 🤏️ ✌️ 🤞️ 🤟️ 🤘️ 🤙️ 👈️ 👉️ 👆️ 👇️ ☝️ 👍️ 👎️ ✊️ 👊️ 🤛️ 🤜️ 👏️ 🙌️ 👐️ 🤲️ 🤝️ 🙏️ ✍️ 💅️ 💪️ 🙋️ 🙆️ 🙅️ 🤷️ 🤦️ 👶️ 👦️ 👧️ 👨️ 👩️ 👴️ 👵️ 🧑️ 👮️ 👷️ 💂️ 🕵️ 👩‍⚕️ 🧑‍🎓 🧑‍🍳 🧑‍💻 🧑‍🔧 🧑‍🌾 👪️ 💑️ 💏️" },
+      { id: 'animals', icon: '🐶', label: 'Animais e natureza', list: "🐀️ 🐁️ 🐂️ 🐃️ 🐄️ 🐅️ 🐆️ 🐇️ 🐈️ 🐉️ 🐊️ 🐋️ 🐌️ 🐍️ 🐎️ 🐏️ 🐐️ 🐑️ 🐒️ 🐓️ 🐔️ 🐕️ 🐖️ 🐗️ 🐘️ 🐙️ 🐚️ 🐛️ 🐜️ 🐝️ 🐞️ 🐟️ 🐠️ 🐡️ 🐢️ 🐣️ 🐤️ 🐥️ 🐦️ 🐧️ 🐨️ 🐩️ 🐪️ 🐫️ 🐬️ 🐭️ 🐮️ 🐯️ 🐰️ 🐱️ 🐲️ 🐳️ 🐴️ 🐵️ 🐶️ 🐷️ 🐸️ 🐹️ 🐺️ 🐻️ 🐼️ 🐽️ 🐾️ 🦀️ 🦁️ 🦂️ 🦃️ 🦄️ 🦅️ 🦆️ 🦇️ 🦈️ 🦉️ 🦊️ 🦋️ 🦌️ 🦍️ 🦎️ 🦏️ 🦐️ 🦑️ 🦒️ 🦓️ 🦔️ 🦕️ 🦖️ 🦗️ 🦘️ 🦙️ 🦚️ 🦛️ 🦜️ 🦝️ 🦞️ 🦟️ 🦠️ 🦡️ 🦢️ 🦣️ 🦤️ 🦥️ 🦦️ 🦧️ 🦨️ 🦩️ 🦪️ 🦫️ 🦬️ 🦭️ 🦮️ 🌰️ 🌱️ 🌲️ 🌳️ 🌴️ 🌵️ 🌶️ 🌷️ 🌸️ 🌹️ 🌺️ 🌻️ 🌼️ 🌽️ 🌾️ 🌿️ 🍀️ 🍁️ 🍂️ 🍃️ 🍄️ 💐️ 🌸️ 🌹️ 🌺️ 🌻️ 🌼️" },
+      { id: 'food',    icon: '🍔', label: 'Comida e bebida', list: "🍅️ 🍆️ 🍇️ 🍈️ 🍉️ 🍊️ 🍋️ 🍌️ 🍍️ 🍎️ 🍏️ 🍐️ 🍑️ 🍒️ 🍓️ 🍔️ 🍕️ 🍖️ 🍗️ 🍘️ 🍙️ 🍚️ 🍛️ 🍜️ 🍝️ 🍞️ 🍟️ 🍠️ 🍡️ 🍢️ 🍣️ 🍤️ 🍥️ 🍦️ 🍧️ 🍨️ 🍩️ 🍪️ 🍫️ 🍬️ 🍭️ 🍮️ 🍯️ 🍰️ 🍱️ 🍲️ 🍳️ 🍴️ 🍵️ 🍶️ 🍷️ 🍸️ 🍹️ 🍺️ 🍻️ 🍼️ 🍽️ 🍾️ 🍿️ 🥐️ 🥑️ 🥒️ 🥓️ 🥔️ 🥕️ 🥖️ 🥗️ 🥘️ 🥙️ 🥚️ 🥛️ 🥜️ 🥝️ 🥞️ 🥟️ 🥠️ 🥡️ 🥢️ 🥣️ 🥤️ 🥥️ 🥦️ 🥧️ 🥨️ 🥩️ 🥪️ 🥫️ 🌭️ 🌮️ 🌯️ 🧀️" },
+      { id: 'sport',   icon: '⚽', label: 'Atividades', list: "🎠️ 🎡️ 🎢️ 🎣️ 🎤️ 🎥️ 🎦️ 🎧️ 🎨️ 🎩️ 🎪️ 🎫️ 🎬️ 🎭️ 🎮️ 🎯️ 🎰️ 🎱️ 🎲️ 🎳️ 🎴️ 🎵️ 🎶️ 🎷️ 🎸️ 🎹️ 🎺️ 🎻️ 🎼️ 🎽️ 🎾️ 🎿️ 🏀️ 🏁️ 🏂️ 🏃️ 🏄️ 🏅️ 🏆️ 🏇️ 🏈️ 🏉️ 🏊️ ⚽️ ⚾️ 🥊️ 🥋️ 🥌️ 🥍️ 🥎️ 🥏️ 🎯️" },
+      { id: 'travel',  icon: '✈️', label: 'Viagem e lugares', list: "🚀️ 🚁️ 🚂️ 🚃️ 🚄️ 🚅️ 🚆️ 🚇️ 🚈️ 🚉️ 🚊️ 🚋️ 🚌️ 🚍️ 🚎️ 🚏️ 🚐️ 🚑️ 🚒️ 🚓️ 🚔️ 🚕️ 🚖️ 🚗️ 🚘️ 🚙️ 🚚️ 🚛️ 🚜️ 🚝️ 🚞️ 🚟️ 🚠️ 🚡️ 🚢️ 🚣️ 🚤️ 🚥️ 🚦️ 🚧️ 🚨️ 🚩️ 🚪️ 🚫️ 🚬️ 🚭️ 🚮️ 🚯️ 🚰️ 🚱️ 🚲️ 🚳️ 🚴️ 🚵️ 🚶️ 🚷️ 🚸️ 🚹️ 🚺️ 🚻️ 🚼️ 🚽️ 🚾️ 🚿️ 🛀️ 🛁️ 🛂️ 🛃️ 🛄️ 🛅️ 🏔️ 🏕️ 🏖️ 🏗️ 🏘️ 🏙️ 🏚️ 🏛️ 🏜️ 🏝️ 🏞️ 🏟️ 🏠️ 🏡️ 🏢️ 🏣️ 🏤️ 🏥️ 🏦️ 🏧️ 🏨️ 🏩️ 🏪️ 🏫️ 🏬️ 🏭️ 🏮️ 🏯️ 🏰️ 🌍️ 🌎️ 🌏️ 🌐️ 🌑️ 🌒️ 🌓️ 🌔️ 🌕️ 🌖️ 🌗️ 🌘️ 🌙️ 🌚️ 🌛️ 🌜️ 🌝️ 🌞️ 🌟️ 🌠️ 🚊️ 🚋️ 🚌️ 🚍️ 🚎️ 🚏️ 🚐️ 🚑️ 🚒️ 🚓️ 🚔️ 🚕️ 🚖️ 🚗️ 🚘️ 🚙️ 🚚️ 🚛️ 🚜️ 🚝️ 🚞️ 🚲️ 🛴️ 🛵️ 🛶️ 🛸️ 🛺️" },
+      { id: 'objects', icon: '💡', label: 'Objetos',    list: "💡️ 💢️ 💣️ 💤️ 💥️ 💦️ 💧️ 💨️ 💩️ 💪️ 💫️ 💬️ 💭️ 💮️ 💯️ 💰️ 💱️ 💲️ 💳️ 💴️ 💵️ 💶️ 💷️ 💸️ 💹️ 💺️ 💻️ 💼️ 💽️ 💾️ 💿️ 📀️ 📁️ 📂️ 📃️ 📄️ 📅️ 📆️ 📇️ 📈️ 📉️ 📊️ 📋️ 📌️ 📍️ 📎️ 📏️ 📐️ 📑️ 📒️ 📓️ 📔️ 📕️ 📖️ 📗️ 📘️ 📙️ 📚️ 📛️ 📜️ 📝️ 📞️ 📟️ 📠️ 📡️ 📢️ 📣️ 📤️ 📥️ 📦️ 📧️ 📨️ 📩️ 📪️ 📫️ 📬️ 📭️ 📮️ 📯️ 📰️ 📱️ 📲️ 📳️ 📴️ 📵️ 📶️ 📷️ 📸️ 📹️ 📺️ 📻️ 📼️ 🔊️ 🔋️ 🔌️ 🔍️ 🔎️ 🔏️ 🔐️ 🔑️ 🔒️ 🔓️ 🔔️ 🔕️ 🔖️ 🔗️ 🔘️ 🔙️ 🔚️ 🔛️ 🔜️ 🔝️ 🔞️ 🔟️ 🔠️ 🔡️ 🔢️ 🔣️ 🔤️ 🔥️ 🔦️ 🔧️ 🔨️ 🔩️ 🔪️ 🔫️ 🔬️ 🔭️ 🔮️ ⌚️ ⌛️ 🖥️ 🧠️ 🧡️ 🧢️ 🧣️ 🧤️ 🧥️ 🧦️ 🧧️ 🧨️ 🧩️ 🧪️ 🧫️ 🧬️ 🧭️ 🧮️ 🧯️ 🧰️ 🧱️ 🧲️ 🧳️ 🧴️ 🧵️ 🧶️ 🧷️ 🧸️ 🧹️ 🧺️ 🧻️ 🧼️ 🧽️ 🧾️ 🧿️ 👔️ 👕️ 👖️ 👗️ 👘️ 👙️ 👚️ 👛️ 👜️ 👝️ 👞️ 👟️ 👠️ 👡️ 👢️ 🎩️ 👑️ 👒️ 👓️ 🎒️ 🎓️ 🎖️ 🎗️" },
+      { id: 'symbols', icon: '❤️', label: 'Símbolos',   list: "💓️ 💔️ 💕️ 💖️ 💗️ 💘️ 💙️ 💚️ 💛️ 💜️ 💝️ 💞️ 💟️ ❤️ 🖤️ 🤍️ 🤎️ ✅️ ❌️ ⭐️ ✨️ 💯️ 💢️ 💣️ 💤️ 💥️ ⚠️ 🚫️ 🔞️ ❗️ ❓️ 💤️ ♻️ 🔴️ 🔵️ 🟠️ 🟡️ 🟢️ 🔶️ 🔷️ 🔸️ 🔹️ 🔺️ 🔻️ 🔼️ 🔽️" }
+    ].map(g => ({ ...g, items: g.list.split(' ') }));
     const EMOJI_RECENT_KEY = 'finbud_emoji_recent';
     let emojiTarget = 'tx';
-    let emojiTab = 'money';
 
     function emojiNorm(v) {
       return String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
@@ -986,9 +1001,10 @@
     function openEmojiPicker(target) {
       emojiTarget = target;
       document.getElementById('emojiSearch').value = '';
-      emojiTab = getRecentEmojis().length ? 'recent' : 'money';
-      renderEmojiPicker();
       openModal('modalEmoji');
+      renderEmojiPicker();
+      document.getElementById('emojiGrid').scrollTop = 0;
+      emojiSpy();
     }
 
     function pickEmoji(e) {
@@ -997,40 +1013,67 @@
       closeModal('modalEmoji');
     }
 
+    function emojiButtons(list) {
+      return list.map(e => `<button type="button" data-e="${esc(e)}" onclick="pickEmoji(this.dataset.e)" class="emo h-10 rounded-xl text-[26px] leading-none hover:bg-slate-800 active:scale-90 transition">${esc(e)}</button>`).join('');
+    }
+
+    // seções do seletor: Recentes, "Finanças e dia a dia" (com títulos) e o banco completo
+    function emojiSections() {
+      const recents = getRecentEmojis();
+      const secs = [];
+      if (recents.length) secs.push({ id: 'recent', icon: '🕘', label: 'Recentes', blocks: [{ title: 'Usados recentemente', items: recents }] });
+      secs.push({ id: 'mine', icon: '⭐', label: 'Finanças e dia a dia', blocks: EMOJI_GROUPS.map(g => ({ title: g.label, items: g.items.map(x => x[0]) })) });
+      EMOJI_FULL.forEach(g => secs.push({ id: g.id, icon: g.icon, label: g.label, blocks: [{ title: g.label, items: g.items }] }));
+      return secs;
+    }
+
     function selectEmojiTab(id) {
-      emojiTab = id;
-      document.getElementById('emojiSearch').value = '';
-      renderEmojiPicker();
+      const grid = document.getElementById('emojiGrid');
+      const sec = grid.querySelector(`[data-sec="${id}"]`);
+      if (sec) grid.scrollTop = sec.offsetTop;
+      emojiSpy(id);
+    }
+
+    function emojiSpy(forceId) {
+      const grid = document.getElementById('emojiGrid');
+      const secs = [...grid.querySelectorAll('[data-sec]')];
+      if (!secs.length) return;
+      let cur = forceId || secs[0].dataset.sec;
+      if (!forceId) secs.forEach(sc => { if (sc.offsetTop <= grid.scrollTop + 12) cur = sc.dataset.sec; });
+      document.querySelectorAll('#emojiTabs [data-tab]').forEach(b => {
+        const on = b.dataset.tab === cur;
+        b.classList.toggle('bg-emerald-500/20', on);
+        b.classList.toggle('opacity-60', !on);
+        b.setAttribute('aria-current', on ? 'true' : 'false');
+      });
     }
 
     function renderEmojiPicker() {
       const q = emojiNorm(document.getElementById('emojiSearch').value);
-      const recents = getRecentEmojis();
-      const tabs = (recents.length ? [{ id: 'recent', icon: '🕘', label: 'Recentes' }] : []).concat(EMOJI_GROUPS);
-      if (!tabs.some(t => t.id === emojiTab)) emojiTab = tabs[0].id;
-
+      const grid = document.getElementById('emojiGrid');
       const tabsEl = document.getElementById('emojiTabs');
-      tabsEl.style.display = q ? 'none' : '';
-      tabsEl.innerHTML = tabs.map(t => {
-        const on = t.id === emojiTab;
-        return `<button type="button" onclick="selectEmojiTab('${t.id}')" aria-label="${esc(t.label)}" title="${esc(t.label)}" class="emo flex-shrink-0 h-9 min-w-[2.5rem] px-2 rounded-xl text-lg leading-none transition ${on ? 'bg-emerald-500/20 border border-emerald-500/50' : 'bg-slate-800/60 border border-slate-700/60'}">${t.icon}</button>`;
-      }).join('');
+      const cols = 'grid grid-cols-8 gap-0.5';
 
-      let list;
       if (q) {
-        list = [];
+        tabsEl.style.display = 'none';
+        const seen = new Set(), list = [];
         EMOJI_GROUPS.forEach(g => g.items.forEach(([e, kw]) => {
-          if (emojiNorm(kw + ' ' + g.label).includes(q)) list.push(e);
+          if (!seen.has(e) && emojiNorm(kw + ' ' + g.label).includes(q)) { seen.add(e); list.push(e); }
         }));
-      } else if (emojiTab === 'recent') {
-        list = recents;
-      } else {
-        list = EMOJI_GROUPS.find(g => g.id === emojiTab).items.map(x => x[0]);
+        grid.innerHTML = list.length
+          ? `<div class="${cols} py-1">${emojiButtons(list)}</div>`
+          : '<p class="text-xs text-slate-500 text-center py-10">Nenhum ícone encontrado.</p>';
+        return;
       }
 
-      document.getElementById('emojiGrid').innerHTML = list.length
-        ? list.map(e => `<button type="button" data-e="${esc(e)}" onclick="pickEmoji(this.dataset.e)" class="emo h-11 rounded-xl text-2xl leading-none hover:bg-slate-800 active:scale-90 transition">${esc(e)}</button>`).join('')
-        : '<p class="col-span-7 text-xs text-slate-500 text-center py-8">Nenhum ícone encontrado.</p>';
+      tabsEl.style.display = '';
+      const secs = emojiSections();
+      tabsEl.innerHTML = secs.map(sc =>
+        `<button type="button" data-tab="${sc.id}" onclick="selectEmojiTab('${sc.id}')" aria-label="${esc(sc.label)}" title="${esc(sc.label)}" class="emo flex-1 h-10 rounded-xl text-xl leading-none transition">${sc.icon}</button>`).join('');
+      grid.innerHTML = secs.map(sc =>
+        `<div data-sec="${sc.id}">` + sc.blocks.map(b =>
+          `<h4 class="sticky top-0 z-10 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400" style="background:var(--modal)">${esc(b.title)}</h4><div class="${cols}">${emojiButtons(b.items)}</div>`).join('') + '</div>').join('');
+      emojiSpy();
     }
 
     function tileIcon(o, isIncome) {

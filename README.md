@@ -24,7 +24,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
 - **Tema claro e escuro**: botão ☀️/🌙 no cabeçalho e opção Automático / Claro / Escuro em Configurações > Aparência (segue o sistema; padrão: escuro).
-- **Ícones (emojis) nos lançamentos**: escolha um ícone ao criar/editar lançamentos e recorrências (busca, categorias, recentes e sugestão automática pela descrição). Aparece no extrato, nas recorrências e no calendário do dia.
+- **Ícones (emojis) nos lançamentos**: escolha um ícone ao criar/editar lançamentos e recorrências em um painel de emojis estilo WhatsApp (rolagem contínua, abas por categoria, busca, recentes e sugestão automática pela descrição). Aparece no extrato, nas recorrências e no calendário do dia.
 
 - **Configurações Personalizadas**:
   - **Gestão de Categorias**: criar, **editar** (nome, ícone e limite) e excluir categorias. Renomear atualiza os lançamentos e recorrências.
