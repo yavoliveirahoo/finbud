@@ -9,7 +9,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Projeção de saldo mensal considerando lançamentos recorrentes ativos.
   - **Calendário mensal** com os lançamentos de cada dia, status de pago/pendente/atrasado e o saldo acumulado abaixo do dia (toque no dia para ver os itens e marcar como pago).
   - Gráficos interativos (Chart.js) para distribuição de despesas por categoria.
-  - Barras de progresso dinâmicas para limites de orçamento por categoria (com alertas de 80% e 100%).
+  - Barras de progresso dos limites de orçamento por categoria (alertas de 80% e 100%), com quanto resta ou quanto passou. **Toque numa barra, ou em Ajustar, para editar os limites.**
 
 - **Despesas e Receitas Recorrentes**:
   - Suporte a periodicidades: **Diário, Semanal, Quinzenal, Mensal e Anual**.
@@ -24,7 +24,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
 - **Configurações Personalizadas**:
-  - **Gestão de Categorias**: Criação de categorias para Receita ou Despesa com escolha de ícones personalizados e limite de orçamento.
+  - **Gestão de Categorias**: criar, **editar** (nome, ícone e limite) e excluir categorias. Renomear atualiza os lançamentos e recorrências.
   - **Backup & Importação**: Exportação e importação de dados em formato JSON.
   - **Reset de Dados**: Opção para restaurar configurações iniciais.
 

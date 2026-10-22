@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="dark">
   <title>FinBud - Controle Financeiro</title>
   <meta name="theme-color" content="#0d9488">
   <meta name="mobile-web-app-capable" content="yes">
@@ -56,6 +57,29 @@
     .pb-safe {
       padding-bottom: env(safe-area-inset-bottom, 20px);
     }
+
+    :root { color-scheme: dark; }
+
+    body {
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    main > section { animation: viewIn .28s ease both; }
+    .glass-modal { animation: sheetUp .3s cubic-bezier(.2, .8, .2, 1) both; }
+    .toast { animation: toastIn .25s ease both; }
+
+    @keyframes viewIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes sheetUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+
+    :focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+    input:focus-visible, select:focus-visible { outline: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-24 selection:bg-emerald-500 selection:text-white">
@@ -68,7 +92,7 @@
       </div>
       <div>
         <h1 class="text-lg font-bold tracking-tight text-white leading-none">FinBud</h1>
-        <p class="text-[11px] text-slate-400 mt-0.5">S26 Ultra Edition</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Controle financeiro pessoal</p>
       </div>
     </div>
     
@@ -80,42 +104,45 @@
   </header>
 
   <!-- MAIN CONTAINER -->
-  <main class="flex-1 max-w-lg w-full mx-auto px-4 pt-4 space-y-5">
+  <main class="flex-1 max-w-lg w-full mx-auto px-3 pt-4 space-y-4">
 
     <!-- VIEW 1: DASHBOARD -->
-    <section id="viewDashboard" class="space-y-5">
+    <section id="viewDashboard" class="space-y-4">
       <!-- SUMMARY CARD -->
       <div class="glass-card rounded-3xl p-5 relative overflow-hidden shadow-2xl border border-emerald-500/20">
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div class="absolute -left-8 -bottom-8 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -right-8 -top-8 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -left-8 -bottom-8 w-36 h-36 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Saldo Total Atual</p>
-        <h2 id="totalBalance" class="text-3xl font-extrabold text-white mt-1 tracking-tight">R$ 0,00</h2>
+        <div class="relative flex items-center justify-between">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Saldo atual</p>
+          <span id="summaryMonth" class="text-[11px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full"></span>
+        </div>
+        <h2 id="totalBalance" class="relative text-4xl font-extrabold text-white mt-2 tracking-tight">R$ 0,00</h2>
 
-        <div class="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-slate-800/80">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+        <div class="relative grid grid-cols-2 gap-2.5 mt-5">
+          <div class="rounded-2xl bg-slate-900/50 border border-slate-800 p-3 flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 flex-shrink-0">
               <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
             </div>
-            <div>
+            <div class="min-w-0">
               <p class="text-[11px] text-slate-400">Receitas</p>
-              <p id="totalIncome" class="text-sm font-semibold text-emerald-400">R$ 0,00</p>
+              <p id="totalIncome" class="text-sm font-bold text-emerald-400 truncate">R$ 0,00</p>
             </div>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
+          <div class="rounded-2xl bg-slate-900/50 border border-slate-800 p-3 flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20 flex-shrink-0">
               <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
             </div>
-            <div>
+            <div class="min-w-0">
               <p class="text-[11px] text-slate-400">Despesas</p>
-              <p id="totalExpense" class="text-sm font-semibold text-rose-400">R$ 0,00</p>
+              <p id="totalExpense" class="text-sm font-bold text-rose-400 truncate">R$ 0,00</p>
             </div>
           </div>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-slate-800/50 flex items-center justify-between text-xs text-slate-400">
-          <span class="flex items-center gap-1.5"><i data-lucide="calculator" class="w-3.5 h-3.5 text-teal-400"></i> Projeção Recorrente Mês:</span>
-          <span id="projectedBalance" class="font-bold text-slate-200">R$ 0,00</span>
+        <div class="relative mt-3 pt-3 border-t border-slate-800/60 flex items-center justify-between gap-2 text-xs text-slate-400">
+          <span class="flex items-center gap-1.5"><i data-lucide="trending-up" class="w-3.5 h-3.5 text-teal-400"></i> Previsto para o fim do mês</span>
+          <span id="projectedBalance" class="text-sm font-bold text-slate-100">R$ 0,00</span>
         </div>
       </div>
 
@@ -125,44 +152,62 @@
           <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
             <i data-lucide="plus" class="w-4 h-4"></i>
           </div>
-          <span class="text-xs font-bold text-slate-200">Nova Receita</span>
+          <span class="text-sm font-bold text-slate-100">Nova Receita</span>
         </button>
         <button onclick="openTransactionModal('expense')" class="glass-card p-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800/60 active:scale-95 transition border border-rose-500/30">
           <div class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
             <i data-lucide="minus" class="w-4 h-4"></i>
           </div>
-          <span class="text-xs font-bold text-slate-200">Nova Despesa</span>
+          <span class="text-sm font-bold text-slate-100">Nova Despesa</span>
         </button>
       </div>
 
       <!-- CALENDAR -->
-      <div class="glass-card rounded-3xl p-3.5 space-y-3">
-        <div class="flex items-center justify-between gap-2">
-          <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+      <div id="calendarCard" class="glass-card rounded-3xl p-2 pt-3.5 space-y-3">
+        <div class="flex items-center justify-between gap-2 px-1">
+          <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
             <i data-lucide="calendar-days" class="w-4 h-4 text-emerald-400"></i> Calendário
           </h3>
-          <div class="flex items-center gap-1">
-            <button onclick="calToday()" class="text-[10px] font-semibold px-2 py-1 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700 active:scale-95">Hoje</button>
-            <button onclick="calShift(-1)" aria-label="Mês anterior" class="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 active:scale-95">
-              <i data-lucide="chevron-left" class="w-4 h-4"></i>
-            </button>
-            <span id="calMonthLabel" class="text-xs font-semibold text-slate-200 min-w-[104px] text-center"></span>
-            <button onclick="calShift(1)" aria-label="Próximo mês" class="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 active:scale-95">
-              <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </button>
+          <button onclick="calToday()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700 active:scale-95">Hoje</button>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <button onclick="calShift(-1)" aria-label="Mês anterior" class="w-11 h-11 rounded-xl text-slate-300 hover:bg-slate-800 active:scale-95 flex items-center justify-center">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
+          <span id="calMonthLabel" class="text-base font-bold text-white text-center"></span>
+          <button onclick="calShift(1)" aria-label="Próximo mês" class="w-11 h-11 rounded-xl text-slate-300 hover:bg-slate-800 active:scale-95 flex items-center justify-center">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-1.5">
+          <div class="rounded-xl bg-slate-900/60 border border-slate-800 px-2 py-2 text-center min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">Entradas</p>
+            <p id="calStatIn" class="text-xs font-bold text-emerald-400 mt-0.5 truncate">R$ 0,00</p>
+          </div>
+          <div class="rounded-xl bg-slate-900/60 border border-slate-800 px-2 py-2 text-center min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">Saídas</p>
+            <p id="calStatOut" class="text-xs font-bold text-rose-400 mt-0.5 truncate">R$ 0,00</p>
+          </div>
+          <div class="rounded-xl bg-slate-900/60 border border-slate-800 px-2 py-2 text-center min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">Saldo final</p>
+            <p id="calStatEnd" class="text-xs font-bold text-slate-100 mt-0.5 truncate">R$ 0,00</p>
           </div>
         </div>
 
-        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-500">
-          <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
+          <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
         </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
 
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[10px] text-slate-400">
-          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-[4px] bg-emerald-500 inline-block"></span> Pago/recebido</span>
-          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-[4px] border-2 border-amber-400 inline-block"></span> Pendente</span>
-          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-[4px] border-2 border-rose-400 inline-block"></span> Atrasado</span>
-          <span class="flex items-center gap-1"><span class="text-amber-300 font-bold">1,2k</span> saldo previsto</span>
+        <div class="space-y-1.5 pt-1 px-1 text-[11px] text-slate-400">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-[5px] bg-emerald-500 inline-block"></span> Pago/recebido</span>
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-[5px] border-2 border-amber-400 inline-block"></span> Pendente</span>
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-[5px] border-2 border-rose-400 inline-block"></span> Atrasado</span>
+          </div>
+          <p>Número embaixo do dia = saldo no fim dele: <span class="text-emerald-300 font-bold">verde</span> confirmado, <span class="text-amber-300 font-bold">amarelo</span> previsto, <span class="text-rose-400 font-bold">vermelho</span> negativo.</p>
         </div>
       </div>
 
@@ -185,7 +230,7 @@
           <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
             <i data-lucide="target" class="w-4 h-4 text-teal-400"></i> Limites de Orçamento
           </h3>
-          <button onclick="openModal('modalSettings')" class="text-[11px] text-emerald-400 font-semibold hover:underline">Ajustar</button>
+          <button onclick="openBudgetModal()" class="text-xs text-emerald-400 font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 active:scale-95 flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Ajustar</button>
         </div>
         <div id="budgetProgressList" class="space-y-3 pt-1">
           <!-- Injected dynamically -->
@@ -237,19 +282,19 @@
 
   <!-- BOTTOM NAVBAR (Samsung One UI Style) -->
   <nav class="fixed bottom-0 inset-x-0 z-40 glass-card border-t border-slate-800/80 px-6 py-2 pb-safe flex items-center justify-around">
-    <button onclick="switchTab('viewDashboard')" id="tabDashboard" class="flex flex-col items-center gap-1 text-emerald-400 transition">
-      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-      <span class="text-[10px] font-semibold">Início</span>
+    <button onclick="switchTab('viewDashboard')" id="tabDashboard" class="flex flex-col items-center gap-1 px-4 py-1 min-w-[84px] text-emerald-400 transition font-bold">
+      <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+      <span class="text-xs font-semibold">Início</span>
     </button>
 
-    <button onclick="switchTab('viewRecurring')" id="tabRecurring" class="flex flex-col items-center gap-1 text-slate-400 transition">
-      <i data-lucide="refresh-cw" class="w-5 h-5"></i>
-      <span class="text-[10px] font-semibold">Recorrentes</span>
+    <button onclick="switchTab('viewRecurring')" id="tabRecurring" class="flex flex-col items-center gap-1 px-4 py-1 min-w-[84px] text-slate-400 transition">
+      <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+      <span class="text-xs font-semibold">Recorrentes</span>
     </button>
 
-    <button onclick="switchTab('viewTransactions')" id="tabTransactions" class="flex flex-col items-center gap-1 text-slate-400 transition">
-      <i data-lucide="list-ordered" class="w-5 h-5"></i>
-      <span class="text-[10px] font-semibold">Extrato</span>
+    <button onclick="switchTab('viewTransactions')" id="tabTransactions" class="flex flex-col items-center gap-1 px-4 py-1 min-w-[84px] text-slate-400 transition">
+      <i data-lucide="list-ordered" class="w-6 h-6"></i>
+      <span class="text-xs font-semibold">Extrato</span>
     </button>
   </nav>
 
@@ -449,7 +494,7 @@
       <!-- SECTION: EXISTING CATEGORIES -->
       <div class="space-y-2">
         <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Categorias Cadastradas</h4>
-        <div id="settingsCategoryList" class="max-h-40 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
+        <div id="settingsCategoryList" class="max-h-64 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
           <!-- Injected dynamically -->
         </div>
       </div>
@@ -468,9 +513,97 @@
           </label>
         </div>
 
-        <button onclick="resetData()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-xl text-xs border border-rose-500/20 transition">
+        <button onclick="openModal('modalReset')" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-xl text-xs border border-rose-500/20 transition">
           Resetar Todos os Dados
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BUDGETS -->
+  <div id="modalBudgets" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 pb-8 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="target" class="w-4 h-4 text-teal-400"></i> Limites de Orçamento
+        </h3>
+        <button onclick="closeModal('modalBudgets')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-white" aria-label="Fechar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">Quanto você pretende gastar por mês em cada categoria. Deixe vazio (ou 0) para ficar sem limite.</p>
+      <form id="formBudgets" onsubmit="handleSaveBudgets(event)" class="space-y-4">
+        <div id="budgetEditList" class="space-y-2.5"></div>
+        <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold text-slate-950 rounded-xl text-sm transition active:scale-98 shadow-lg shadow-emerald-500/20">Salvar limites</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT CATEGORY -->
+  <div id="modalCategoryEdit" class="fixed inset-0 z-[55] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 pb-8 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          Editar categoria <span id="catEditType" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700"></span>
+        </h3>
+        <button onclick="closeModal('modalCategoryEdit')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-white" aria-label="Fechar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="formCategoryEdit" onsubmit="handleSaveCategoryEdit(event)" class="space-y-3.5">
+        <input type="hidden" id="catEditId" value="">
+        <div>
+          <label for="catEditName" class="text-xs font-medium text-slate-400 mb-1 block">Nome</label>
+          <input type="text" id="catEditName" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label for="catEditIcon" class="text-xs font-medium text-slate-400 mb-1 block">Ícone</label>
+          <select id="catEditIcon" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500"></select>
+        </div>
+        <div id="catEditBudgetWrap">
+          <label for="catEditBudget" class="text-xs font-medium text-slate-400 mb-1 block">Limite mensal (R$)</label>
+          <input type="text" inputmode="decimal" autocomplete="off" id="catEditBudget" placeholder="Sem limite" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500">
+        </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">Ao renomear, os lançamentos e as recorrências dessa categoria são atualizados junto.</p>
+        <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold text-slate-950 rounded-xl text-sm transition active:scale-98 shadow-lg shadow-emerald-500/20">Salvar alterações</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRM (genérico) -->
+  <div id="modalConfirm" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
+    <div class="glass-modal w-full max-w-sm rounded-3xl p-5 space-y-4">
+      <h3 id="confirmTitle" class="text-base font-bold text-white">Confirmar</h3>
+      <p id="confirmText" class="text-sm text-slate-300 leading-relaxed"></p>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="confirmCancel()" class="py-3 rounded-xl text-sm font-bold text-slate-200 bg-slate-800 border border-slate-700 active:scale-95">Cancelar</button>
+        <button id="confirmOk" onclick="confirmAccept()" class="py-3 rounded-xl text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVISOS (toasts) -->
+  <div id="toastHost" aria-live="polite" class="fixed inset-x-0 bottom-24 z-[80] flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
+
+  <!-- MODAL: CONFIRM RESET -->
+  <div id="modalReset" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
+    <div class="glass-modal w-full max-w-sm rounded-3xl p-5 space-y-4 border border-rose-500/30">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="triangle-alert" class="w-5 h-5"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Apagar todos os dados?</h3>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Isso apaga <b>todos os lançamentos, recorrências e categorias criadas por você</b> neste aparelho. As categorias voltam ao padrão.
+        <span class="text-rose-300 font-semibold">Não dá para desfazer.</span>
+      </p>
+      <button onclick="exportBackup()" class="w-full py-2.5 rounded-xl text-xs font-semibold text-slate-200 bg-slate-800/80 border border-slate-700 flex items-center justify-center gap-2 active:scale-95">
+        <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i> Exportar backup antes
+      </button>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="closeModal('modalReset')" class="py-3 rounded-xl text-sm font-bold text-slate-200 bg-slate-800 border border-slate-700 active:scale-95">Cancelar</button>
+        <button onclick="resetData()" class="py-3 rounded-xl text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95">Sim, apagar tudo</button>
       </div>
     </div>
   </div>
@@ -546,9 +679,9 @@
       Object.keys(tabs).forEach(id => {
         const btn = document.getElementById(tabs[id]);
         if (id === viewId) {
-          btn.className = "flex flex-col items-center gap-1 text-emerald-400 transition font-bold";
+          btn.className = "flex flex-col items-center gap-1 px-4 py-1 min-w-[84px] text-emerald-400 transition font-bold";
         } else {
-          btn.className = "flex flex-col items-center gap-1 text-slate-400 transition";
+          btn.className = "flex flex-col items-center gap-1 px-4 py-1 min-w-[84px] text-slate-400 transition";
         }
       });
 
@@ -695,35 +828,46 @@
       const name = document.getElementById('catName').value.trim();
       const type = document.getElementById('catType').value;
       const icon = document.getElementById('catIcon').value;
-      const budget = parseFloat(document.getElementById('catBudget').value) || 0;
+      const budget = type === 'expense' ? (parseMoney(document.getElementById('catBudget').value) || 0) : 0;
 
       if (!name) return;
+      if (state.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        showToast('Já existe uma categoria com esse nome.', 'error');
+        return;
+      }
 
-      const newCat = {
-        id: 'cat-' + Date.now(),
-        name,
-        type,
-        icon,
-        budget
-      };
-
-      state.categories.push(newCat);
+      state.categories.push({ id: 'cat-' + Date.now(), name, type, icon, budget: Math.max(0, budget) });
       saveState();
       document.getElementById('formCategory').reset();
       renderSettingsCategories();
+      showToast('Categoria criada.');
     }
 
     function deleteCategory(id) {
-      if (!confirm('Excluir esta categoria?')) return;
-      state.categories = state.categories.filter(c => c.id !== id);
-      saveState();
-      renderSettingsCategories();
+      const c = state.categories.find(x => x.id === id);
+      if (!c) return;
+      askConfirm({
+        title: 'Excluir categoria?',
+        text: `"${c.name}" será removida da lista. Os lançamentos já feitos nela continuam no extrato.`,
+        okLabel: 'Excluir'
+      }, () => {
+        state.categories = state.categories.filter(x => x.id !== id);
+        saveState();
+        renderSettingsCategories();
+      });
     }
 
     function deleteTransaction(id) {
-      if (!confirm('Excluir este lançamento?')) return;
-      state.transactions = state.transactions.filter(t => t.id !== id);
-      saveState();
+      const t = state.transactions.find(x => x.id === id);
+      if (!t) return;
+      askConfirm({
+        title: 'Excluir lançamento?',
+        text: `${t.description} · ${formatCurrency(t.amount)}`,
+        okLabel: 'Excluir'
+      }, () => {
+        state.transactions = state.transactions.filter(x => x.id !== id);
+        saveState();
+      });
     }
 
     function toggleRecurringActive(id) {
@@ -735,9 +879,16 @@
     }
 
     function deleteRecurring(id) {
-      if (!confirm('Excluir esta regra recorrente?')) return;
-      state.recurring = state.recurring.filter(r => r.id !== id);
-      saveState();
+      const r = state.recurring.find(x => x.id === id);
+      if (!r) return;
+      askConfirm({
+        title: 'Excluir recorrência?',
+        text: `"${r.description}" deixa de aparecer no calendário. Lançamentos já feitos continuam no extrato.`,
+        okLabel: 'Excluir'
+      }, () => {
+        state.recurring = state.recurring.filter(x => x.id !== id);
+        saveState();
+      });
     }
 
     function logRecurringAsTransaction(id) {
@@ -767,7 +918,7 @@
           paid: true
         });
         saveState();
-        alert(`"${rec.description}" de ${formatDate(due)} registrado no extrato e marcado como pago no calendário!`);
+        showToast(`"${rec.description}" de ${formatDate(due)} pago e registrado no extrato.`);
         return;
       }
 
@@ -783,7 +934,7 @@
         paid: true
       });
       saveState();
-      alert(`Lançamento "${rec.description}" registrado com sucesso no extrato!`);
+      showToast(`"${rec.description}" registrado no extrato.`);
     }
 
     // CALCULATIONS & COMPUTATIONS
@@ -828,39 +979,49 @@
       document.getElementById('totalBalance').innerText = formatCurrency(totals.balance);
       document.getElementById('totalIncome').innerText = formatCurrency(totals.income);
       document.getElementById('totalExpense').innerText = formatCurrency(totals.expense);
-      document.getElementById('projectedBalance').innerText = formatCurrency(totals.projected);
+      const balEl = document.getElementById('totalBalance');
+      balEl.classList.toggle('text-rose-300', totals.balance < 0);
+      balEl.classList.toggle('text-white', totals.balance >= 0);
 
-      // Render Category Budgets
+      // previsão real para o fim do mês: usa o mesmo cálculo do calendário (pendentes + recorrências)
+      const now = new Date();
+      const md = buildMonthData(now.getFullYear(), now.getMonth());
+      document.getElementById('projectedBalance').innerText = formatCurrency(md.info[md.dim].balance);
+      document.getElementById('summaryMonth').innerText = monthLabel(now.getFullYear(), now.getMonth()).replace(' de ', ' ');
+
+      // Limites de orçamento (toque numa linha para ajustar aquela categoria)
       const budgetContainer = document.getElementById('budgetProgressList');
-      budgetContainer.innerHTML = '';
+      const withBudget = state.categories.filter(c => c.type === 'expense' && c.budget > 0);
 
-      const expenseCategories = state.categories.filter(c => c.type === 'expense' && c.budget > 0);
-
-      if (expenseCategories.length === 0) {
-        budgetContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-2">Nenhum orçamento configurado.</p>`;
+      if (withBudget.length === 0) {
+        budgetContainer.innerHTML = `
+          <div class="text-center py-3 space-y-2.5">
+            <p class="text-xs text-slate-500">Nenhum limite definido ainda.</p>
+            <button onclick="openBudgetModal()" class="text-xs font-semibold text-emerald-400 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 active:scale-95">Definir limites</button>
+          </div>`;
       } else {
-        expenseCategories.forEach(cat => {
-          const spent = state.transactions
-            .filter(t => t.paid !== false && t.type === 'expense' && t.category === cat.name && (t.date || '').startsWith(todayStr().slice(0, 7)))
-            .reduce((sum, t) => sum + t.amount, 0);
-
-          const percent = Math.min(Math.round((spent / cat.budget) * 100), 100);
-          let barColor = 'bg-emerald-500';
-          if (percent >= 100) barColor = 'bg-rose-500';
-          else if (percent >= 80) barColor = 'bg-amber-500';
-
-          budgetContainer.innerHTML += `
-            <div class="space-y-1">
-              <div class="flex justify-between text-xs">
-                <span class="text-slate-300 font-medium">${esc(cat.name)}</span>
-                <span class="text-slate-400">${formatCurrency(spent)} / <span class="text-slate-200 font-semibold">${formatCurrency(cat.budget)}</span></span>
+        budgetContainer.innerHTML = withBudget.map(cat => {
+          const spent = spentThisMonth(cat.name);
+          const pct = Math.round((spent / cat.budget) * 100);
+          const bar = Math.min(pct, 100);
+          const left = cat.budget - spent;
+          const barColor = pct >= 100 ? 'bg-rose-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
+          const tone = pct >= 100 ? 'text-rose-300' : pct >= 80 ? 'text-amber-300' : 'text-slate-400';
+          const status = left >= 0 ? `Restam ${formatCurrency(left)}` : `Acima em ${formatCurrency(-left)}`;
+          return `
+            <button onclick="openBudgetModal('${esc(cat.id)}')" class="w-full text-left space-y-1.5 p-2.5 rounded-2xl hover:bg-slate-800/40 active:bg-slate-800/60 transition">
+              <div class="flex items-baseline justify-between gap-2">
+                <span class="text-sm font-semibold text-slate-100 truncate">${esc(cat.name)}</span>
+                <span class="text-xs text-slate-400 flex-shrink-0">${formatCurrency(spent)} <span class="text-slate-600">/</span> <span class="text-slate-100 font-semibold">${formatCurrency(cat.budget)}</span></span>
               </div>
-              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div>
+              <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width: ${bar}%"></div>
               </div>
-            </div>
-          `;
-        });
+              <div class="flex justify-between text-[11px] font-medium ${tone}">
+                <span>${status}</span><span class="font-bold">${pct}%</span>
+              </div>
+            </button>`;
+        }).join('');
       }
     }
 
@@ -907,7 +1068,7 @@
               position: 'right',
               labels: {
                 color: '#94a3b8',
-                font: { size: 11, family: 'Plus Jakarta Sans' },
+                font: { size: 12, family: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" },
                 boxWidth: 12
               }
             }
@@ -928,7 +1089,7 @@
     function periodBadge(key, text) {
       const info = PERIOD_INFO[key];
       if (!info) return '';
-      return `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${info.cls}"><i data-lucide="repeat" class="w-3 h-3"></i>${text || info.label}</span>`;
+      return `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border ${info.cls}"><i data-lucide="repeat" class="w-3 h-3"></i>${text || info.label}</span>`;
     }
 
     function renderRecurring() {
@@ -945,34 +1106,33 @@
         const isIncome = rec.type === 'income';
         const badgeColor = isIncome ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10';
 
+        const every = (PERIOD_INFO[rec.periodicity] || {}).every || '';
         container.innerHTML += `
-          <div class="glass-card p-3.5 rounded-2xl flex items-center justify-between border border-slate-800 ${!rec.active ? 'opacity-50' : ''}">
-            <div class="flex items-center gap-3">
-              <button onclick="toggleRecurringActive('${rec.id}')" class="w-9 h-9 rounded-xl flex items-center justify-center ${badgeColor}">
-                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
+          <div class="glass-card rounded-2xl border border-slate-800 ${!rec.active ? 'opacity-60' : ''}">
+            <div class="p-3.5 flex items-start gap-3">
+              <button onclick="toggleRecurringActive('${rec.id}')" aria-label="${rec.active ? 'Pausar' : 'Reativar'}" title="${rec.active ? 'Ativa: toque para pausar' : 'Pausada: toque para reativar'}" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${badgeColor}">
+                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-5 h-5"></i>
               </button>
-              <div>
-                <h4 class="text-xs font-bold text-slate-200">${esc(rec.description)}</h4>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-slate-100 truncate">${esc(rec.description)}</h4>
                 <div class="flex items-center flex-wrap gap-1.5 mt-1">
                   ${periodBadge(rec.periodicity)}
-                  <span class="text-[10px] text-slate-400">${(PERIOD_INFO[rec.periodicity] || {}).every || ''}</span>
+                  <span class="text-[11px] text-slate-400">${every}</span>
+                  ${!rec.active ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full border text-slate-300 bg-slate-500/15 border-slate-500/30">Pausada</span>' : ''}
                 </div>
                 <p class="text-[11px] text-slate-400 mt-1">${esc(rec.category)} • Início: ${formatDate(rec.startDate)}</p>
               </div>
+              <p class="text-sm font-extrabold flex-shrink-0 ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(rec.amount)}</p>
             </div>
-
-            <div class="flex items-center gap-2">
-              <div class="text-right">
-                <p class="text-xs font-extrabold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(rec.amount)}</p>
-              </div>
-              <button onclick="logRecurringAsTransaction('${rec.id}')" title="Lançar agora" class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 active:scale-95">
-                <i data-lucide="check" class="w-4 h-4"></i>
+            <div class="grid grid-cols-3 border-t border-slate-800/80 divide-x divide-slate-800/80 text-xs font-semibold">
+              <button onclick="logRecurringAsTransaction('${rec.id}')" class="py-3 flex items-center justify-center gap-1.5 text-emerald-400 active:bg-emerald-500/10 rounded-bl-2xl">
+                <i data-lucide="check" class="w-4 h-4"></i> Lançar
               </button>
-              <button onclick="editRecurring('${rec.id}')" title="Editar" class="p-2 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 active:scale-95">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
+              <button onclick="editRecurring('${rec.id}')" class="py-3 flex items-center justify-center gap-1.5 text-slate-300 active:bg-slate-800">
+                <i data-lucide="pencil" class="w-4 h-4"></i> Editar
               </button>
-              <button onclick="deleteRecurring('${rec.id}')" title="Excluir" class="p-2 rounded-lg text-slate-500 hover:text-rose-400 active:scale-95">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <button onclick="deleteRecurring('${rec.id}')" class="py-3 flex items-center justify-center gap-1.5 text-rose-400 active:bg-rose-500/10 rounded-br-2xl">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
               </button>
             </div>
           </div>
@@ -1007,31 +1167,30 @@
 
       filtered.forEach(t => {
         const isIncome = t.type === 'income';
+        const badges = [
+          t.paid === false ? '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-amber-300 bg-amber-500/15 border-amber-500/30">Pendente</span>' : '',
+          t.periodicity ? periodBadge(t.periodicity) : (/\(Recorrente\)$/.test(t.description) ? '<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border text-slate-300 bg-slate-500/15 border-slate-500/30"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>' : '')
+        ].join('');
         container.innerHTML += `
-          <div class="glass-card p-3 rounded-2xl flex items-center justify-between border border-slate-800/80 hover:bg-slate-800/40 transition">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center ${isIncome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
-                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
-              </div>
-              <div>
-                <h4 class="text-xs font-bold text-slate-200">${esc(t.description)}</h4>
-                <div class="flex items-center flex-wrap gap-1.5">
-                  <p class="text-[10px] text-slate-400">${esc(t.category)} • ${formatDate(t.date)}</p>
-                  ${t.paid === false ? '<span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border text-amber-300 bg-amber-500/15 border-amber-500/30">Pendente</span>' : ''}
-                  ${t.periodicity ? periodBadge(t.periodicity) : (/\(Recorrente\)$/.test(t.description) ? '<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border text-slate-300 bg-slate-500/15 border-slate-500/30"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>' : '')}
-                </div>
-              </div>
+          <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border border-slate-800/80 hover:bg-slate-800/40 transition">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+              <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-5 h-5"></i>
             </div>
-
-            <div class="flex items-center gap-3">
-              <p class="text-xs font-bold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">
-                ${isIncome ? '+' : '-'} ${formatCurrency(t.amount)}
-              </p>
-              <button onclick="editTransaction('${t.id}')" title="Editar" class="text-slate-500 hover:text-sky-400 p-1">
-                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-sm font-bold text-slate-100 truncate">${esc(t.description)}</h4>
+              <p class="text-[11px] text-slate-400 truncate">${esc(t.category)}</p>
+              ${badges ? `<div class="flex items-center flex-wrap gap-1.5 mt-1">${badges}</div>` : ''}
+            </div>
+            <div class="flex items-center gap-0.5 flex-shrink-0">
+              <div class="text-right mr-1">
+                <p class="text-sm font-bold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${isIncome ? '+' : '-'} ${formatCurrency(t.amount)}</p>
+                <p class="text-[11px] text-slate-500">${formatDate(t.date)}</p>
+              </div>
+              <button onclick="editTransaction('${t.id}')" title="Editar" aria-label="Editar" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-400 active:bg-slate-800">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
               </button>
-              <button onclick="deleteTransaction('${t.id}')" title="Excluir" class="text-slate-600 hover:text-rose-400 p-1">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <button onclick="deleteTransaction('${t.id}')" title="Excluir" aria-label="Excluir" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-400 active:bg-slate-800">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
@@ -1043,23 +1202,26 @@
 
     function renderSettingsCategories() {
       const container = document.getElementById('settingsCategoryList');
-      container.innerHTML = '';
-
-      state.categories.forEach(c => {
-        container.innerHTML += `
-          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
-            <div class="flex items-center gap-2">
-              <i data-lucide="${c.icon || 'tag'}" class="w-3.5 h-3.5 text-emerald-400"></i>
-              <span class="text-slate-200 font-medium">${esc(c.name)}</span>
-              <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 uppercase">${c.type === 'income' ? 'Receita' : 'Despesa'}</span>
+      container.innerHTML = state.categories.map(c => {
+        const isExp = c.type === 'expense';
+        const sub = isExp ? (c.budget > 0 ? 'Despesa • Limite ' + formatCurrency(c.budget) : 'Despesa • Sem limite') : 'Receita';
+        return `
+          <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="${esc(c.icon || 'tag')}" class="w-4 h-4"></i>
             </div>
-            <button onclick="deleteCategory('${c.id}')" class="text-slate-500 hover:text-rose-400 p-1">
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-slate-100 truncate">${esc(c.name)}</p>
+              <p class="text-[11px] text-slate-400">${sub}</p>
+            </div>
+            <button onclick="openCategoryEdit('${esc(c.id)}')" title="Editar categoria e limite" aria-label="Editar ${esc(c.name)}" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-400 active:bg-slate-800">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
-          </div>
-        `;
-      });
-
+            <button onclick="deleteCategory('${esc(c.id)}')" title="Excluir" aria-label="Excluir ${esc(c.name)}" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-400 active:bg-slate-800">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>`;
+      }).join('');
       refreshIcons();
     }
 
@@ -1110,12 +1272,12 @@
             };
             saveState();
             closeModal('modalSettings');
-            alert('Backup restaurado com sucesso!');
+            showToast('Backup restaurado com sucesso.');
           } else {
-            alert('Arquivo JSON inválido.');
+            showToast('Arquivo JSON inválido.', 'error');
           }
         } catch(err) {
-          alert('Erro ao carregar o arquivo JSON.');
+          showToast('Erro ao carregar o arquivo JSON.', 'error');
         }
       };
       reader.readAsText(file);
@@ -1123,10 +1285,197 @@
     }
 
     function resetData() {
-      if (confirm('Tem certeza que deseja apagar todos os dados?')) {
-        localStorage.removeItem('finbud_state_s26');
-        location.reload();
+      state = {
+        transactions: [],
+        recurring: [],
+        categories: DEFAULT_CATEGORIES.map(c => ({ ...c }))
+      };
+      calSelected = null;
+      calDayItems = [];
+      const now = new Date();
+      calView.y = now.getFullYear();
+      calView.m = now.getMonth();
+
+      saveState(); // grava o estado vazio e redesenha tudo (sem recarregar, para não recriar os dados de exemplo)
+
+      closeModal('modalReset');
+      closeModal('modalSettings');
+      closeModal('modalDay');
+      switchTab('viewDashboard');
+      showToast('Todos os dados foram apagados.');
+    }
+
+    // ===== AVISOS E CONFIRMAÇÃO =====
+    const ALERT_SVG = '<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+
+    function showToast(msg, kind) {
+      const host = document.getElementById('toastHost');
+      if (!host) return;
+      const error = kind === 'error';
+      const el = document.createElement('div');
+      el.className = 'toast pointer-events-auto w-full max-w-sm flex items-start gap-2.5 rounded-2xl border bg-slate-900/95 backdrop-blur px-4 py-3 text-sm font-medium shadow-2xl ' +
+        (error ? 'border-rose-500/40 text-rose-100' : 'border-emerald-500/40 text-emerald-50');
+      el.innerHTML = `<span class="mt-0.5 flex-shrink-0 ${error ? 'text-rose-400' : 'text-emerald-400'}">${error ? ALERT_SVG : CHECK_SVG.replace('w-3 h-3', 'w-4 h-4')}</span><span>${esc(msg)}</span>`;
+      host.appendChild(el);
+      setTimeout(() => {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 320);
+      }, 3200);
+    }
+
+    let confirmCb = null;
+    function askConfirm(opts, cb) {
+      confirmCb = cb;
+      document.getElementById('confirmTitle').innerText = opts.title || 'Confirmar';
+      document.getElementById('confirmText').innerText = opts.text || '';
+      document.getElementById('confirmOk').innerText = opts.okLabel || 'Confirmar';
+      openModal('modalConfirm');
+    }
+    function confirmAccept() {
+      const cb = confirmCb;
+      confirmCb = null;
+      closeModal('modalConfirm');
+      if (cb) cb();
+    }
+    function confirmCancel() {
+      confirmCb = null;
+      closeModal('modalConfirm');
+    }
+
+    // aceita "1500", "1500.50", "1.500", "1.500,50" e "1500,50"
+    function parseMoney(v) {
+      const raw = String(v == null ? '' : v).trim();
+      if (!raw) return 0;
+      let t = raw.replace(/[^\d.,-]/g, '');
+      if (!/\d/.test(t)) return NaN; // texto sem nenhum número = inválido
+      if (t.includes(',') && t.includes('.')) t = t.replace(/\./g, '').replace(',', '.');
+      else if (t.includes(',')) t = t.replace(',', '.');
+      else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
+      const n = parseFloat(t);
+      return isFinite(n) ? n : NaN;
+    }
+
+    function moneyToInput(n) {
+      return n > 0 ? String(n).replace('.', ',') : '';
+    }
+
+    // ===== ORÇAMENTOS E CATEGORIAS =====
+    function spentThisMonth(catName) {
+      const prefix = todayStr().slice(0, 7);
+      return state.transactions
+        .filter(t => t.paid !== false && t.type === 'expense' && t.category === catName && (t.date || '').startsWith(prefix))
+        .reduce((sum, t) => sum + t.amount, 0);
+    }
+
+    function openBudgetModal(focusId) {
+      renderBudgetEditor();
+      openModal('modalBudgets');
+      if (focusId) {
+        setTimeout(() => {
+          const el = document.getElementById('bud-' + focusId);
+          if (el) { el.focus(); el.select(); }
+        }, 80);
       }
+    }
+
+    function renderBudgetEditor() {
+      const list = document.getElementById('budgetEditList');
+      const cats = state.categories.filter(c => c.type === 'expense');
+      if (!cats.length) {
+        list.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Nenhuma categoria de despesa. Crie uma em Configurações.</p>';
+        return;
+      }
+      list.innerHTML = cats.map(c => `
+        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="${esc(c.icon || 'tag')}" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <label for="bud-${esc(c.id)}" class="block text-sm font-semibold text-slate-100 truncate">${esc(c.name)}</label>
+            <p class="text-[11px] text-slate-400">Gasto no mês: ${formatCurrency(spentThisMonth(c.name))}</p>
+          </div>
+          <div class="relative w-32 flex-shrink-0">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">R$</span>
+            <input id="bud-${esc(c.id)}" data-cat="${esc(c.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="Sem limite"
+              value="${moneyToInput(c.budget)}"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-8 pr-2.5 py-2.5 text-sm font-semibold text-slate-100 text-right outline-none focus:border-emerald-500">
+          </div>
+        </div>`).join('');
+      refreshIcons();
+    }
+
+    function handleSaveBudgets(e) {
+      e.preventDefault();
+      const updates = [];
+      for (const inp of document.querySelectorAll('#budgetEditList input[data-cat]')) {
+        const v = parseMoney(inp.value);
+        if (isNaN(v) || v < 0) {
+          inp.focus();
+          showToast('Valor inválido em um dos limites.', 'error');
+          return;
+        }
+        updates.push([inp.dataset.cat, Math.round(v * 100) / 100]);
+      }
+      updates.forEach(([id, v]) => {
+        const c = state.categories.find(x => x.id === id);
+        if (c) c.budget = v;
+      });
+      saveState();
+      closeModal('modalBudgets');
+      showToast('Limites atualizados.');
+    }
+
+    function openCategoryEdit(id) {
+      const c = state.categories.find(x => x.id === id);
+      if (!c) return;
+      const isExp = c.type === 'expense';
+      const sel = document.getElementById('catEditIcon');
+      sel.innerHTML = document.getElementById('catIcon').innerHTML;
+      if (c.icon && ![...sel.options].some(o => o.value === c.icon)) {
+        sel.insertAdjacentHTML('afterbegin', `<option value="${esc(c.icon)}">${esc(c.icon)}</option>`);
+      }
+      sel.value = c.icon;
+      document.getElementById('catEditId').value = c.id;
+      document.getElementById('catEditName').value = c.name;
+      document.getElementById('catEditType').innerText = isExp ? 'Despesa' : 'Receita';
+      document.getElementById('catEditBudgetWrap').classList.toggle('hidden', !isExp);
+      document.getElementById('catEditBudget').value = isExp ? moneyToInput(c.budget) : '';
+      openModal('modalCategoryEdit');
+    }
+
+    function handleSaveCategoryEdit(e) {
+      e.preventDefault();
+      const id = document.getElementById('catEditId').value;
+      const c = state.categories.find(x => x.id === id);
+      if (!c) return;
+      const name = document.getElementById('catEditName').value.trim();
+      if (!name) return;
+      if (state.categories.some(x => x.id !== id && x.name.toLowerCase() === name.toLowerCase())) {
+        showToast('Já existe uma categoria com esse nome.', 'error');
+        return;
+      }
+      let budget = c.budget || 0;
+      if (c.type === 'expense') {
+        const v = parseMoney(document.getElementById('catEditBudget').value);
+        if (isNaN(v) || v < 0) {
+          showToast('Valor de limite inválido.', 'error');
+          return;
+        }
+        budget = Math.round(v * 100) / 100;
+      }
+      const oldName = c.name;
+      if (oldName !== name) {
+        state.transactions.forEach(t => { if (t.category === oldName) t.category = name; });
+        state.recurring.forEach(r => { if (r.category === oldName) r.category = name; });
+      }
+      c.name = name;
+      c.icon = document.getElementById('catEditIcon').value;
+      c.budget = budget;
+      saveState();
+      closeModal('modalCategoryEdit');
+      renderSettingsCategories();
+      showToast('Categoria atualizada.');
     }
 
     // ===== CALENDÁRIO =====
@@ -1200,16 +1549,16 @@
         });
       });
 
-      let bal = opening, pendingSoFar = false;
+      let bal = opening, pendingSoFar = false, inc = 0, exp = 0;
       const info = {};
       for (let d = 1; d <= dim; d++) {
         const items = days[d].sort((a, b) => (a.type === b.type ? 0 : a.type === 'income' ? -1 : 1));
-        items.forEach(it => { bal += it.type === 'income' ? it.amount : -it.amount; });
+        items.forEach(it => { if (it.type === 'income') { bal += it.amount; inc += it.amount; } else { bal -= it.amount; exp += it.amount; } });
         const pending = items.filter(i => !i.paid).length;
         if (pending) pendingSoFar = true;
         info[d] = { date: `${prefix}-${pad2(d)}`, items, pending, paid: items.length - pending, balance: bal, forecast: pendingSoFar };
       }
-      return { opening, dim, info };
+      return { opening, dim, info, income: inc, expense: exp };
     }
 
     function compactMoney(v) {
@@ -1227,6 +1576,14 @@
       return t.charAt(0).toUpperCase() + t.slice(1);
     }
 
+    // saldo curto o bastante para caber na célula sem cortar: 3.700 / -850 / 12k
+    function calMoney(v) {
+      const r = Math.round(v);
+      if (r === 0) return '0';
+      if (Math.abs(r) >= 10000) return compactMoney(r);
+      return r.toLocaleString('pt-BR');
+    }
+
     function renderCalendar() {
       const grid = document.getElementById('calendarGrid');
       if (!grid) return;
@@ -1234,6 +1591,13 @@
       const data = buildMonthData(y, m);
       const today = todayStr();
       document.getElementById('calMonthLabel').innerText = monthLabel(y, m).replace(' de ', ' ');
+
+      document.getElementById('calStatIn').innerText = formatCurrency(data.income);
+      document.getElementById('calStatOut').innerText = formatCurrency(data.expense);
+      const endBal = data.info[data.dim].balance;
+      const endEl = document.getElementById('calStatEnd');
+      endEl.innerText = formatCurrency(endBal);
+      endEl.className = 'text-xs font-bold mt-0.5 truncate ' + (endBal < 0 ? 'text-rose-400' : 'text-slate-100');
 
       let html = '';
       const firstDow = new Date(y, m, 1).getDay();
@@ -1244,31 +1608,38 @@
         const has = day.items.length > 0;
         const isToday = day.date === today;
         const overdue = day.pending > 0 && day.date < today;
+        const dow = new Date(y, m, d).getDay();
 
-        let box = '<span class="w-4 h-4 inline-block"></span>';
+        let box = '<span class="w-5 h-5 inline-block"></span>';
         if (day.pending > 0) {
           const c = overdue ? 'border-rose-400 text-rose-300' : 'border-amber-400 text-amber-300';
-          box = `<span class="w-4 h-4 rounded-[5px] border-2 ${c} text-[9px] font-extrabold leading-none flex items-center justify-center">${day.pending > 1 ? day.pending : ''}</span>`;
+          box = `<span class="w-5 h-5 rounded-md border-2 ${c} text-[11px] font-extrabold leading-none flex items-center justify-center">${day.pending > 1 ? day.pending : ''}</span>`;
         } else if (has) {
-          box = `<span class="w-4 h-4 rounded-[5px] bg-emerald-500 text-slate-950 flex items-center justify-center">${CHECK_SVG}</span>`;
+          box = `<span class="w-5 h-5 rounded-md bg-emerald-500 text-slate-950 flex items-center justify-center">${CHECK_SVG.replace('w-3 h-3', 'w-3.5 h-3.5')}</span>`;
         }
 
         let balCls = 'text-slate-600';
-        if (day.balance < 0) balCls = has ? 'text-rose-400' : 'text-rose-400/50';
+        if (day.balance < 0) balCls = has ? 'text-rose-400' : 'text-rose-400/60';
         else if (has) balCls = day.forecast ? 'text-amber-300' : 'text-emerald-300';
+        else if (day.balance > 0) balCls = 'text-slate-500';
 
         const border = isToday ? 'border-emerald-500/70' : has ? 'border-slate-700/80' : 'border-transparent';
         const bg = has ? 'bg-slate-800/50' : 'bg-transparent';
+        const numCls = isToday
+          ? 'w-6 h-6 rounded-full bg-emerald-500 text-slate-950 text-[13px] flex items-center justify-center'
+          : 'text-[15px] ' + (dow === 0 || dow === 6 ? 'text-slate-400' : 'text-slate-100');
+        const label = `Dia ${d}, ${has ? day.items.length + (day.items.length === 1 ? ' lançamento' : ' lançamentos') : 'sem lançamentos'}, saldo ${formatCurrency(day.balance)}`;
 
         html += `
-          <button onclick="openDaySheet('${day.date}')" class="flex flex-col items-center justify-between gap-0.5 rounded-xl py-1 px-0.5 min-h-[58px] border ${border} ${bg} active:scale-95 transition">
-            <span class="text-[10px] font-bold ${isToday ? 'text-emerald-400' : 'text-slate-300'}">${d}</span>
+          <button onclick="openDaySheet('${day.date}')" aria-label="${label}" class="relative flex flex-col items-center justify-between rounded-xl pt-1.5 pb-1.5 px-0.5 min-h-[78px] border ${border} ${bg} active:scale-95 transition">
+            <span class="leading-none font-bold ${numCls}">${d}</span>
             ${box}
-            <span class="text-[9px] leading-none font-semibold ${balCls}">${compactMoney(day.balance)}</span>
+            <span class="text-[11px] leading-none font-bold ${balCls}">${calMoney(day.balance)}</span>
           </button>`;
       }
       grid.innerHTML = html;
     }
+
 
     function calShift(delta) {
       let m = calView.m + delta, y = calView.y;
@@ -1283,6 +1654,18 @@
       calView.y = d.getFullYear(); calView.m = d.getMonth();
       renderCalendar();
     }
+
+    (function enableCalendarSwipe() {
+      const el = document.getElementById('calendarGrid');
+      if (!el) return;
+      let sx = 0, sy = 0;
+      el.addEventListener('touchstart', e => { const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+      el.addEventListener('touchend', e => {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - sx, dy = t.clientY - sy;
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 45) calShift(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    })();
 
     function openDaySheet(date) {
       calSelected = date;
@@ -1320,8 +1703,8 @@
               <div class="flex-1 min-w-0">
                 <h4 class="text-xs font-bold text-slate-200 truncate">${esc(it.description)}</h4>
                 <div class="flex items-center flex-wrap gap-1.5 mt-0.5">
-                  <span class="text-[10px] text-slate-400">${esc(it.category)}</span>
-                  <span class="text-[10px] font-bold ${statusCls}">${status}</span>
+                  <span class="text-[11px] text-slate-400">${esc(it.category)}</span>
+                  <span class="text-[11px] font-bold ${statusCls}">${status}</span>
                   ${it.periodicity ? periodBadge(it.periodicity) : ''}
                 </div>
               </div>
@@ -1412,7 +1795,23 @@
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
     }
 
+    function setupGlobalHandlers() {
+      const backdrop = { modalDay: () => closeModal('modalDay'), modalReset: () => closeModal('modalReset'), modalConfirm: confirmCancel };
+      Object.keys(backdrop).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', e => { if (e.target === el) backdrop[id](); });
+      });
+      const order = ['modalConfirm', 'modalReset', 'modalCategoryEdit', 'modalTransaction', 'modalRecurring', 'modalBudgets', 'modalDay', 'modalSettings'];
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const open = order.find(id => !document.getElementById(id).classList.contains('hidden'));
+        if (!open) return;
+        if (open === 'modalConfirm') confirmCancel(); else closeModal(open);
+      });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      setupGlobalHandlers();
       loadState();
       renderAll();
       switchTab('viewDashboard');
