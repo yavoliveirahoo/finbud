@@ -3,16 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <title>FinBud - Controle Financeiro</title>
-  <meta name="theme-color" content="#0d9488">
+  <meta name="theme-color" content="#090d16">
+  <script>
+    /* aplica o tema salvo antes de pintar a tela (evita "piscar") */
+    (function () {
+      try {
+        var p = localStorage.getItem('finbud_theme') || 'dark';
+        var light = p === 'light' || (p === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches);
+        if (light) document.documentElement.classList.add('light');
+      } catch (e) {}
+    })();
+  </script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="FinBud">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" href="icons/favicon-64.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      ink: 'rgb(var(--ink) / <alpha-value>)',
+      slate: {
+        100: 'rgb(var(--s100) / <alpha-value>)', 200: 'rgb(var(--s200) / <alpha-value>)',
+        300: 'rgb(var(--s300) / <alpha-value>)', 400: 'rgb(var(--s400) / <alpha-value>)',
+        500: 'rgb(var(--s500) / <alpha-value>)', 600: 'rgb(var(--s600) / <alpha-value>)',
+        700: 'rgb(var(--s700) / <alpha-value>)', 800: 'rgb(var(--s800) / <alpha-value>)',
+        900: 'rgb(var(--s900) / <alpha-value>)'
+      }
+    } } } };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -23,23 +46,59 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* ===== TEMAS: escuro (padrão) e claro ===== */
+    :root {
+      --s100: 241 245 249; --s200: 226 232 240; --s300: 203 213 225; --s400: 148 163 184;
+      --s500: 100 116 139; --s600: 71 85 105;   --s700: 51 65 85;    --s800: 30 41 59; --s900: 15 23 42;
+      --ink: 255 255 255;
+      --body: #090d16;
+      --card: rgba(15, 23, 42, 0.75);  --card-b: rgba(255, 255, 255, 0.08);
+      --modal: rgba(15, 23, 42, 0.95); --modal-b: rgba(255, 255, 255, 0.12);
+      --legend: #94a3b8;
+    }
+    html.light {
+      --s100: 15 23 42;   --s200: 30 41 59;   --s300: 51 65 85;   --s400: 71 85 105;
+      --s500: 100 116 139; --s600: 148 163 184; --s700: 203 213 225; --s800: 226 232 240; --s900: 255 255 255;
+      --ink: 15 23 42;
+      --body: #f1f5f9;
+      --card: rgba(255, 255, 255, 0.92);  --card-b: rgba(15, 23, 42, 0.08);
+      --modal: rgba(255, 255, 255, 0.98); --modal-b: rgba(15, 23, 42, 0.1);
+      --legend: #475569;
+      color-scheme: light;
+    }
+    html.light .glass-card { box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 6px 18px -8px rgba(15, 23, 42, .10); }
+    html.light .shadow-2xl { box-shadow: 0 14px 34px -14px rgba(15, 23, 42, .22); }
+    html.light .text-emerald-400, html.light .text-emerald-300 { color: #047857; }
+    html.light .text-rose-400, html.light .text-rose-300 { color: #be123c; }
+    html.light .text-amber-300 { color: #b45309; }
+    html.light .text-teal-400 { color: #0f766e; }
+    html.light .text-sky-400, html.light .text-sky-300 { color: #0369a1; }
+    html.light .text-violet-300 { color: #6d28d9; }
+    html.light .text-fuchsia-300 { color: #a21caf; }
+    html.light .active-tab { color: #059669; }
+    html.light .bg-emerald-500 { background-color: #10b981; }
+    .theme-sun { display: inline-block; }
+    html.light .theme-sun { display: none; }
+    html:not(.light) .theme-moon { display: none; }
+    html, body { transition: background-color .25s ease; }
+
     body {
-      background-color: #090d16;
-      color: #f1f5f9;
+      background-color: var(--body);
+      color: rgb(var(--s100));
     }
 
     .glass-card {
-      background: rgba(15, 23, 42, 0.75);
+      background: var(--card);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-b);
     }
 
     .glass-modal {
-      background: rgba(15, 23, 42, 0.95);
+      background: var(--modal);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--modal-b);
     }
 
     .active-tab {
@@ -59,6 +118,7 @@
     }
 
     :root { color-scheme: dark; }
+    .emo { font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 
     body {
       font-variant-numeric: tabular-nums;
@@ -87,16 +147,56 @@
   <!-- TOP HEADER -->
   <header class="sticky top-0 z-30 glass-card border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-        <i data-lucide="wallet" class="w-5 h-5 text-slate-950 font-bold"></i>
-      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="40" height="40" class="w-10 h-10 flex-shrink-0 drop-shadow-lg" role="img" aria-label="FinBud">
+  <defs>
+    <linearGradient id="hb-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="0.5" stop-color="#0d9488"/>
+      <stop offset="1" stop-color="#155e75"/>
+    </linearGradient>
+    <radialGradient id="hb-glow" cx="0.22" cy="0.12" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="hb-f" gradientUnits="userSpaceOnUse" x1="0" y1="246" x2="0" y2="778">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d1fae5"/>
+    </linearGradient>
+    <linearGradient id="hb-coin" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#fef08a"/>
+      <stop offset="0.55" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="hb-sh" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="26" stdDeviation="24" flood-color="#022c3a" flood-opacity="0.38"/>
+    </filter>
+    <clipPath id="hb-clip"><rect width="1024" height="1024" rx="224"/></clipPath>
+  </defs>
+  <g clip-path="url(#hb-clip)">
+    <rect width="1024" height="1024" fill="url(#hb-bg)"/>
+    <circle cx="880" cy="150" r="300" fill="#ffffff" opacity="0.07"/>
+    <circle cx="110" cy="930" r="340" fill="#022c3a" opacity="0.16"/>
+    <rect width="1024" height="1024" fill="url(#hb-glow)"/>
+  </g>
+  <g>
+    <rect x="322" y="246" width="122" height="532" rx="61" fill="url(#hb-f)"/>
+    <rect x="322" y="246" width="390" height="122" rx="61" fill="url(#hb-f)"/>
+    <rect x="322" y="436" width="300" height="122" rx="61" fill="url(#hb-f)"/>
+    <circle cx="640" cy="690" r="108" fill="url(#hb-coin)"/>
+    <circle cx="640" cy="690" r="84" fill="none" stroke="#b45309" stroke-opacity="0.28" stroke-width="10"/>
+    <path d="M598 716 L640 668 L682 716" fill="none" stroke="#92400e" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
       <div>
-        <h1 class="text-lg font-bold tracking-tight text-white leading-none">FinBud</h1>
+        <h1 class="text-lg font-bold tracking-tight text-ink leading-none">FinBud</h1>
         <p class="text-[11px] text-slate-400 mt-0.5">Controle financeiro pessoal</p>
       </div>
     </div>
     
     <div class="flex items-center gap-2">
+      <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 transition active:scale-95 border border-slate-700/50" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+        <i data-lucide="sun" class="theme-sun w-5 h-5"></i><i data-lucide="moon" class="theme-moon w-5 h-5"></i>
+      </button>
       <button onclick="openModal('modalSettings')" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 transition active:scale-95 border border-slate-700/50" aria-label="Configurações">
         <i data-lucide="settings" class="w-5 h-5"></i>
       </button>
@@ -117,7 +217,7 @@
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Saldo atual</p>
           <span id="summaryMonth" class="text-[11px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full"></span>
         </div>
-        <h2 id="totalBalance" class="relative text-4xl font-extrabold text-white mt-2 tracking-tight">R$ 0,00</h2>
+        <h2 id="totalBalance" class="relative text-4xl font-extrabold text-ink mt-2 tracking-tight">R$ 0,00</h2>
 
         <div class="relative grid grid-cols-2 gap-2.5 mt-5">
           <div class="rounded-2xl bg-slate-900/50 border border-slate-800 p-3 flex items-center gap-2.5">
@@ -175,7 +275,7 @@
           <button onclick="calShift(-1)" aria-label="Mês anterior" class="w-11 h-11 rounded-xl text-slate-300 hover:bg-slate-800 active:scale-95 flex items-center justify-center">
             <i data-lucide="chevron-left" class="w-5 h-5"></i>
           </button>
-          <span id="calMonthLabel" class="text-base font-bold text-white text-center"></span>
+          <span id="calMonthLabel" class="text-base font-bold text-ink text-center"></span>
           <button onclick="calShift(1)" aria-label="Próximo mês" class="w-11 h-11 rounded-xl text-slate-300 hover:bg-slate-800 active:scale-95 flex items-center justify-center">
             <i data-lucide="chevron-right" class="w-5 h-5"></i>
           </button>
@@ -242,7 +342,7 @@
     <section id="viewRecurring" class="space-y-4 hidden">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-base font-bold text-white">Assinaturas e Recorrências</h2>
+          <h2 class="text-base font-bold text-ink">Assinaturas e Recorrências</h2>
           <p class="text-xs text-slate-400">Contas fixas, diárias, semanais e anuais</p>
         </div>
         <button onclick="openRecurringModal()" class="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
@@ -259,7 +359,7 @@
     <section id="viewTransactions" class="space-y-4 hidden">
       <div class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
-          <h2 class="text-base font-bold text-white">Extrato de Movimentações</h2>
+          <h2 class="text-base font-bold text-ink">Extrato de Movimentações</h2>
           <span id="txCountBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">0 itens</span>
         </div>
 
@@ -302,8 +402,8 @@
   <div id="modalDay" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 id="dayTitle" class="text-base font-bold text-white">Dia</h3>
-        <button onclick="closeModal('modalDay')" class="p-1 rounded-lg text-slate-400 hover:text-white" aria-label="Fechar">
+        <h3 id="dayTitle" class="text-base font-bold text-ink">Dia</h3>
+        <button onclick="closeModal('modalDay')" class="p-1 rounded-lg text-slate-400 hover:text-ink" aria-label="Fechar">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -320,8 +420,8 @@
   <div id="modalTransaction" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 id="modalTxTitle" class="text-base font-bold text-white">Nova Transação</h3>
-        <button onclick="closeModal('modalTransaction')" class="p-1 rounded-lg text-slate-400 hover:text-white">
+        <h3 id="modalTxTitle" class="text-base font-bold text-ink">Nova Transação</h3>
+        <button onclick="closeModal('modalTransaction')" class="p-1 rounded-lg text-slate-400 hover:text-ink">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -332,7 +432,14 @@
 
         <div>
           <label class="text-[11px] font-medium text-slate-400 mb-1 block">Descrição</label>
-          <input type="text" id="txDescription" required placeholder="Ex: Supermercado, Salário" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          <div class="flex gap-2">
+            <button type="button" id="txEmojiBtn" onclick="openEmojiPicker('tx')" aria-label="Escolher ícone" title="Escolher ícone" class="w-12 flex-shrink-0 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center active:scale-95 transition">
+              <span class="emo-val emo text-2xl leading-none hidden"></span><i data-lucide="smile-plus" class="emo-empty w-5 h-5 text-slate-400"></i>
+            </button>
+            <input type="text" oninput="renderEmojiSuggest('tx')" id="txDescription" required placeholder="Ex: Supermercado, Salário" class="flex-1 min-w-0 w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+          <input type="hidden" id="txEmoji" value="">
+          <div id="txEmojiSuggest" class="flex items-center flex-wrap gap-1.5 mt-2 empty:hidden"></div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -369,8 +476,8 @@
   <div id="modalRecurring" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 id="modalRecTitle" class="text-base font-bold text-white">Nova Recorrência</h3>
-        <button onclick="closeModal('modalRecurring')" class="p-1 rounded-lg text-slate-400 hover:text-white">
+        <h3 id="modalRecTitle" class="text-base font-bold text-ink">Nova Recorrência</h3>
+        <button onclick="closeModal('modalRecurring')" class="p-1 rounded-lg text-slate-400 hover:text-ink">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -391,7 +498,14 @@
 
         <div>
           <label class="text-[11px] font-medium text-slate-400 mb-1 block">Descrição</label>
-          <input type="text" id="recDescription" required placeholder="Ex: Netflix, Aluguel, Salário" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          <div class="flex gap-2">
+            <button type="button" id="recEmojiBtn" onclick="openEmojiPicker('rec')" aria-label="Escolher ícone" title="Escolher ícone" class="w-12 flex-shrink-0 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center active:scale-95 transition">
+              <span class="emo-val emo text-2xl leading-none hidden"></span><i data-lucide="smile-plus" class="emo-empty w-5 h-5 text-slate-400"></i>
+            </button>
+            <input type="text" oninput="renderEmojiSuggest('rec')" id="recDescription" required placeholder="Ex: Netflix, Aluguel, Salário" class="flex-1 min-w-0 w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+          <input type="hidden" id="recEmoji" value="">
+          <div id="recEmojiSuggest" class="flex items-center flex-wrap gap-1.5 mt-2 empty:hidden"></div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -435,12 +549,28 @@
   <div id="modalSettings" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <h3 class="text-base font-bold text-ink flex items-center gap-2">
           <i data-lucide="settings" class="w-4 h-4 text-emerald-400"></i> Configurações
         </h3>
-        <button onclick="closeModal('modalSettings')" class="p-1 rounded-lg text-slate-400 hover:text-white">
+        <button onclick="closeModal('modalSettings')" class="p-1 rounded-lg text-slate-400 hover:text-ink">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
+      </div>
+
+      <!-- SECTION: APPEARANCE -->
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Aparência</h4>
+        <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-900/50 border border-slate-800" role="group" aria-label="Tema">
+          <button type="button" data-theme-opt="auto" onclick="setTheme('auto')" class="theme-opt py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="smartphone" class="w-4 h-4"></i> Automático
+          </button>
+          <button type="button" data-theme-opt="light" onclick="setTheme('light')" class="theme-opt py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="sun" class="w-4 h-4"></i> Claro
+          </button>
+          <button type="button" data-theme-opt="dark" onclick="setTheme('dark')" class="theme-opt py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="moon" class="w-4 h-4"></i> Escuro
+          </button>
+        </div>
       </div>
 
       <!-- SECTION: CATEGORY CREATION -->
@@ -524,10 +654,10 @@
   <div id="modalBudgets" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 pb-8 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <h3 class="text-base font-bold text-ink flex items-center gap-2">
           <i data-lucide="target" class="w-4 h-4 text-teal-400"></i> Limites de Orçamento
         </h3>
-        <button onclick="closeModal('modalBudgets')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-white" aria-label="Fechar">
+        <button onclick="closeModal('modalBudgets')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-ink" aria-label="Fechar">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -543,10 +673,10 @@
   <div id="modalCategoryEdit" class="fixed inset-0 z-[55] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 pb-8 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <h3 class="text-base font-bold text-ink flex items-center gap-2">
           Editar categoria <span id="catEditType" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700"></span>
         </h3>
-        <button onclick="closeModal('modalCategoryEdit')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-white" aria-label="Fechar">
+        <button onclick="closeModal('modalCategoryEdit')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-ink" aria-label="Fechar">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -573,7 +703,7 @@
   <!-- MODAL: CONFIRM (genérico) -->
   <div id="modalConfirm" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
     <div class="glass-modal w-full max-w-sm rounded-3xl p-5 space-y-4">
-      <h3 id="confirmTitle" class="text-base font-bold text-white">Confirmar</h3>
+      <h3 id="confirmTitle" class="text-base font-bold text-ink">Confirmar</h3>
       <p id="confirmText" class="text-sm text-slate-300 leading-relaxed"></p>
       <div class="grid grid-cols-2 gap-2">
         <button onclick="confirmCancel()" class="py-3 rounded-xl text-sm font-bold text-slate-200 bg-slate-800 border border-slate-700 active:scale-95">Cancelar</button>
@@ -583,6 +713,25 @@
   </div>
 
   <!-- AVISOS (toasts) -->
+  <!-- MODAL: EMOJI PICKER -->
+  <div id="modalEmoji" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-4 pb-5 max-h-[78vh] flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-ink">Escolha um ícone</h3>
+        <button onclick="closeModal('modalEmoji')" class="p-1 rounded-lg text-slate-400 hover:text-ink" aria-label="Fechar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <input type="search" id="emojiSearch" oninput="renderEmojiPicker()" placeholder="Buscar: mercado, uber, aluguel…" autocomplete="off" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+      </div>
+      <div id="emojiTabs" class="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1"></div>
+      <div id="emojiGrid" class="overflow-y-auto no-scrollbar grid grid-cols-7 gap-1 min-h-[168px] content-start"></div>
+      <button type="button" onclick="pickEmoji('')" class="w-full py-2.5 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800/60 border border-slate-700/60 active:scale-95 transition">Sem ícone</button>
+    </div>
+  </div>
+
   <div id="toastHost" aria-live="polite" class="fixed inset-x-0 bottom-24 z-[80] flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
 
   <!-- MODAL: CONFIRM RESET -->
@@ -592,7 +741,7 @@
         <div class="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center flex-shrink-0">
           <i data-lucide="triangle-alert" class="w-5 h-5"></i>
         </div>
-        <h3 class="text-base font-bold text-white">Apagar todos os dados?</h3>
+        <h3 class="text-base font-bold text-ink">Apagar todos os dados?</h3>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
         Isso apaga <b>todos os lançamentos, recorrências e categorias criadas por você</b> neste aparelho. As categorias voltam ao padrão.
@@ -688,6 +837,208 @@
       if (viewId === 'viewDashboard') renderChart();
     }
 
+    // TEMA (claro / escuro / automático)
+    const THEME_KEY = 'finbud_theme';
+    function getThemePref() {
+      try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch (e) { return 'dark'; }
+    }
+    function resolveTheme(pref) {
+      if (pref === 'auto') {
+        const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
+        return mq && mq.matches ? 'light' : 'dark';
+      }
+      return pref === 'light' ? 'light' : 'dark';
+    }
+    function cssVar(name, fallback) {
+      try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback; }
+      catch (e) { return fallback; }
+    }
+    function applyTheme() {
+      const t = resolveTheme(getThemePref());
+      const root = document.documentElement;
+      root.classList.toggle('light', t === 'light');
+      const bar = document.querySelector('meta[name="theme-color"]');
+      if (bar) bar.setAttribute('content', t === 'light' ? '#f1f5f9' : '#090d16');
+      return t;
+    }
+    function updateThemeUI() {
+      const pref = getThemePref();
+      document.querySelectorAll('[data-theme-opt]').forEach(b => {
+        const on = b.dataset.themeOpt === pref;
+        b.classList.toggle('bg-emerald-500', on);
+        b.classList.toggle('text-slate-950', on);
+        b.classList.toggle('text-slate-300', !on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    function setTheme(pref) {
+      try { localStorage.setItem(THEME_KEY, pref); } catch (e) {}
+      applyTheme();
+      updateThemeUI();
+      renderAll(); // redesenha o gráfico com as cores do tema
+    }
+    function toggleTheme() {
+      setTheme(resolveTheme(getThemePref()) === 'light' ? 'dark' : 'light');
+    }
+
+    // ÍCONES (EMOJIS) DOS LANÇAMENTOS
+    const EMOJI_GROUPS = [
+      { id: 'money', icon: '💰', label: 'Dinheiro', items: [
+        ['💰','dinheiro grana salario renda'],['💵','dolar nota cedula'],['💳','cartao credito debito fatura'],['🏦','banco'],
+        ['🪙','moeda'],['💸','gasto despesa pagamento pix'],['🧾','conta recibo nota boleto imposto taxa'],['📈','investimento rendimento acoes bolsa'],
+        ['📉','perda queda'],['🐷','poupanca cofrinho economia reserva'],['💎','luxo joia'],['🤝','acordo negocio freela'],
+        ['🎁','presente bonus'],['💼','trabalho emprego'],['🧮','calculo contabilidade']] },
+      { id: 'home', icon: '🏠', label: 'Casa', items: [
+        ['🏠','casa aluguel moradia condominio'],['🏢','apartamento predio'],['💡','luz energia eletricidade'],['🚰','agua'],
+        ['🔥','gas'],['🛋️','sofa movel decoracao'],['🛏️','cama colchao'],['🧹','limpeza faxina diarista'],
+        ['🔧','manutencao reparo conserto'],['🌐','internet wifi'],['📺','tv televisao'],['🧺','lavanderia roupa'],
+        ['🔑','chave imobiliaria'],['🪴','planta jardim'],['🗑️','lixo']] },
+      { id: 'food', icon: '🍽️', label: 'Comida', items: [
+        ['🛒','mercado supermercado compras feira'],['🍽️','restaurante almoco jantar'],['🍕','pizza'],['🍔','hamburguer lanche'],
+        ['🍟','fastfood batata'],['🥗','salada'],['🍞','padaria pao'],['☕','cafe cafeteria'],
+        ['🍺','cerveja bar'],['🍷','vinho'],['🥩','carne churrasco acougue'],['🍎','fruta hortifruti'],
+        ['🥛','leite'],['🍰','doce sobremesa bolo'],['🍦','sorvete'],['🧃','suco'],
+        ['🛵','delivery ifood entrega'],['🍣','sushi japones'],['🍫','chocolate']] },
+      { id: 'transport', icon: '🚗', label: 'Transporte', items: [
+        ['🚗','carro automovel'],['⛽','combustivel gasolina posto etanol'],['🚌','onibus'],['🚇','metro'],
+        ['🚕','taxi uber 99 corrida'],['🏍️','moto'],['🚲','bicicleta bike'],['✈️','aviao passagem viagem voo'],
+        ['🚆','trem'],['🅿️','estacionamento'],['🛞','pneu'],['🛠️','mecanico oficina revisao'],
+        ['🚢','barco balsa'],['🛣️','pedagio']] },
+      { id: 'health', icon: '💊', label: 'Saúde', items: [
+        ['🏥','hospital plano saude'],['💊','remedio farmacia'],['🩺','medico consulta'],['🦷','dentista'],
+        ['🧘','yoga terapia psicologo'],['🏋️','academia musculacao treino'],['🏃','corrida esporte'],['👓','oculos otica'],
+        ['💉','vacina exame'],['🧴','cosmetico higiene'],['💇','cabelo salao barbearia'],['💅','manicure unha']] },
+      { id: 'fun', icon: '🎬', label: 'Lazer', items: [
+        ['🎬','cinema filme netflix streaming'],['🎵','musica spotify'],['🎮','jogo game playstation xbox'],['📚','livro leitura'],
+        ['🎉','festa'],['🎟️','ingresso show evento'],['🏖️','praia ferias'],['🏨','hotel hospedagem'],
+        ['⚽','futebol'],['🎨','arte hobby'],['📷','foto camera'],['🎤','karaoke'],
+        ['🏕️','camping'],['🎲','jogos tabuleiro'],['🍿','pipoca']] },
+      { id: 'shop', icon: '🛍️', label: 'Compras', items: [
+        ['🛍️','compras shopping loja'],['👕','roupa camiseta vestuario'],['👟','tenis sapato calcado'],['👜','bolsa'],
+        ['📱','celular telefone'],['💻','notebook computador'],['🎧','fone headphone'],['⌚','relogio'],
+        ['🖥️','monitor'],['📦','encomenda pacote correios amazon'],['🪑','cadeira'],['🧸','brinquedo'],['💄','maquiagem']] },
+      { id: 'study', icon: '🎓', label: 'Estudo', items: [
+        ['🎓','faculdade curso formatura'],['🏫','escola mensalidade'],['✏️','material escolar papelaria'],['📖','apostila livro curso'],
+        ['📞','plano telefone telefonia'],['📝','contrato'],['🖨️','impressora'],['⚖️','advogado juridico']] },
+      { id: 'other', icon: '📌', label: 'Outros', items: [
+        ['🐶','cachorro pet racao'],['🐱','gato'],['🦴','veterinario'],['👶','bebe filho fralda'],
+        ['👵','familia avo'],['⛪','igreja dizimo'],['❤️','doacao caridade'],['💍','casamento'],
+        ['🎂','aniversario'],['📌','outros diversos'],['⭐','favorito'],['🔄','assinatura recorrente mensalidade'],
+        ['🛡️','seguro'],['📬','correio'],['🔒','cofre']] }
+    ];
+    const EMOJI_RECENT_KEY = 'finbud_emoji_recent';
+    let emojiTarget = 'tx';
+    let emojiTab = 'money';
+
+    function emojiNorm(v) {
+      return String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    }
+    function getRecentEmojis() {
+      try {
+        const a = JSON.parse(localStorage.getItem(EMOJI_RECENT_KEY) || '[]');
+        return Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 14) : [];
+      } catch (e) { return []; }
+    }
+    function pushRecentEmoji(e) {
+      try {
+        const a = [e, ...getRecentEmojis().filter(x => x !== e)].slice(0, 14);
+        localStorage.setItem(EMOJI_RECENT_KEY, JSON.stringify(a));
+      } catch (err) {}
+    }
+
+    function setEmoji(target, e) {
+      document.getElementById(target + 'Emoji').value = e || '';
+      const btn = document.getElementById(target + 'EmojiBtn');
+      const val = btn.querySelector('.emo-val');
+      const empty = btn.querySelector('.emo-empty');
+      val.textContent = e || '';
+      val.classList.toggle('hidden', !e);
+      if (empty) empty.classList.toggle('hidden', !!e);
+      renderEmojiSuggest(target);
+    }
+
+    function suggestEmojis(text) {
+      const tokens = emojiNorm(text).split(/[^a-z0-9]+/).filter(t => t.length >= 3);
+      if (!tokens.length) return [];
+      const scored = [];
+      EMOJI_GROUPS.forEach(g => g.items.forEach(([e, kw]) => {
+        const words = kw.split(' ');
+        let sc = 0;
+        tokens.forEach(t => {
+          if (words.some(w => w === t || (t.length >= 4 && w.startsWith(t)) || (w.length >= 4 && t.startsWith(w)))) sc++;
+        });
+        if (sc) scored.push([sc, e]);
+      }));
+      return scored.sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]);
+    }
+
+    function renderEmojiSuggest(target) {
+      const box = document.getElementById(target + 'EmojiSuggest');
+      if (!box) return;
+      const has = document.getElementById(target + 'Emoji').value;
+      const sug = has ? [] : suggestEmojis(document.getElementById(target + 'Description').value);
+      box.innerHTML = sug.length
+        ? '<span class="text-[11px] text-slate-500">Sugestão:</span>' + sug.map(e =>
+            `<button type="button" data-e="${esc(e)}" onclick="setEmoji('${target}', this.dataset.e)" class="emo h-9 min-w-[2.25rem] px-2 rounded-lg bg-slate-800/70 border border-slate-700/60 text-xl leading-none active:scale-90 transition">${esc(e)}</button>`).join('')
+        : '';
+    }
+
+    function openEmojiPicker(target) {
+      emojiTarget = target;
+      document.getElementById('emojiSearch').value = '';
+      emojiTab = getRecentEmojis().length ? 'recent' : 'money';
+      renderEmojiPicker();
+      openModal('modalEmoji');
+    }
+
+    function pickEmoji(e) {
+      if (e) pushRecentEmoji(e);
+      setEmoji(emojiTarget, e);
+      closeModal('modalEmoji');
+    }
+
+    function selectEmojiTab(id) {
+      emojiTab = id;
+      document.getElementById('emojiSearch').value = '';
+      renderEmojiPicker();
+    }
+
+    function renderEmojiPicker() {
+      const q = emojiNorm(document.getElementById('emojiSearch').value);
+      const recents = getRecentEmojis();
+      const tabs = (recents.length ? [{ id: 'recent', icon: '🕘', label: 'Recentes' }] : []).concat(EMOJI_GROUPS);
+      if (!tabs.some(t => t.id === emojiTab)) emojiTab = tabs[0].id;
+
+      const tabsEl = document.getElementById('emojiTabs');
+      tabsEl.style.display = q ? 'none' : '';
+      tabsEl.innerHTML = tabs.map(t => {
+        const on = t.id === emojiTab;
+        return `<button type="button" onclick="selectEmojiTab('${t.id}')" aria-label="${esc(t.label)}" title="${esc(t.label)}" class="emo flex-shrink-0 h-9 min-w-[2.5rem] px-2 rounded-xl text-lg leading-none transition ${on ? 'bg-emerald-500/20 border border-emerald-500/50' : 'bg-slate-800/60 border border-slate-700/60'}">${t.icon}</button>`;
+      }).join('');
+
+      let list;
+      if (q) {
+        list = [];
+        EMOJI_GROUPS.forEach(g => g.items.forEach(([e, kw]) => {
+          if (emojiNorm(kw + ' ' + g.label).includes(q)) list.push(e);
+        }));
+      } else if (emojiTab === 'recent') {
+        list = recents;
+      } else {
+        list = EMOJI_GROUPS.find(g => g.id === emojiTab).items.map(x => x[0]);
+      }
+
+      document.getElementById('emojiGrid').innerHTML = list.length
+        ? list.map(e => `<button type="button" data-e="${esc(e)}" onclick="pickEmoji(this.dataset.e)" class="emo h-11 rounded-xl text-2xl leading-none hover:bg-slate-800 active:scale-90 transition">${esc(e)}</button>`).join('')
+        : '<p class="col-span-7 text-xs text-slate-500 text-center py-8">Nenhum ícone encontrado.</p>';
+    }
+
+    function tileIcon(o, isIncome) {
+      return o.emoji
+        ? `<span class="emo text-xl leading-none" aria-hidden="true">${esc(o.emoji)}</span>`
+        : `<i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-5 h-5"></i>`;
+    }
+
     // MODAL CONTROL
     function openModal(id) {
       document.getElementById(id).classList.remove('hidden');
@@ -715,6 +1066,7 @@
       document.getElementById('txDate').value = date || todayStr();
       document.getElementById('txPaid').checked = !date || date <= todayStr();
       fillTxCategories(type);
+      setEmoji('tx', '');
       openModal('modalTransaction');
     }
 
@@ -731,6 +1083,7 @@
       document.getElementById('txDate').value = t.date;
       document.getElementById('txPaid').checked = t.paid !== false;
       fillTxCategories(t.type, t.category);
+      setEmoji('tx', t.emoji || '');
       openModal('modalTransaction');
     }
 
@@ -753,6 +1106,7 @@
       document.getElementById('recSubmitLabel').innerText = 'Salvar Regra Recorrente';
       document.getElementById('recStartDate').value = todayStr();
       fillRecCategories();
+      setEmoji('rec', '');
       openModal('modalRecurring');
     }
 
@@ -769,6 +1123,7 @@
       document.getElementById('recStartDate').value = r.startDate;
       document.getElementById('recPeriodicity').value = r.periodicity;
       fillRecCategories(r.category);
+      setEmoji('rec', r.emoji || '');
       openModal('modalRecurring');
     }
 
@@ -782,7 +1137,8 @@
         type: document.getElementById('txType').value,
         date: document.getElementById('txDate').value,
         category: document.getElementById('txCategory').value,
-        paid: document.getElementById('txPaid').checked
+        paid: document.getElementById('txPaid').checked,
+        emoji: document.getElementById('txEmoji').value
       };
 
       if (editId) {
@@ -809,7 +1165,8 @@
         type: selectedType,
         periodicity: document.getElementById('recPeriodicity').value,
         startDate: document.getElementById('recStartDate').value,
-        category: document.getElementById('recCategory').value
+        category: document.getElementById('recCategory').value,
+        emoji: document.getElementById('recEmoji').value
       };
 
       if (editId) {
@@ -912,6 +1269,7 @@
           type: rec.type,
           date: due,
           category: rec.category,
+          emoji: rec.emoji || '',
           periodicity: rec.periodicity,
           recurringId: rec.id,
           dueDate: due,
@@ -930,6 +1288,7 @@
         type: rec.type,
         date: today,
         category: rec.category,
+          emoji: rec.emoji || '',
         periodicity: rec.periodicity,
         paid: true
       });
@@ -981,7 +1340,7 @@
       document.getElementById('totalExpense').innerText = formatCurrency(totals.expense);
       const balEl = document.getElementById('totalBalance');
       balEl.classList.toggle('text-rose-300', totals.balance < 0);
-      balEl.classList.toggle('text-white', totals.balance >= 0);
+      balEl.classList.toggle('text-ink', totals.balance >= 0);
 
       // previsão real para o fim do mês: usa o mesmo cálculo do calendário (pendentes + recorrências)
       const now = new Date();
@@ -1067,7 +1426,7 @@
             legend: {
               position: 'right',
               labels: {
-                color: '#94a3b8',
+                color: cssVar('--legend', '#94a3b8'),
                 font: { size: 12, family: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" },
                 boxWidth: 12
               }
@@ -1111,7 +1470,7 @@
           <div class="glass-card rounded-2xl border border-slate-800 ${!rec.active ? 'opacity-60' : ''}">
             <div class="p-3.5 flex items-start gap-3">
               <button onclick="toggleRecurringActive('${rec.id}')" aria-label="${rec.active ? 'Pausar' : 'Reativar'}" title="${rec.active ? 'Ativa: toque para pausar' : 'Pausada: toque para reativar'}" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${badgeColor}">
-                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-5 h-5"></i>
+                ${tileIcon(rec, isIncome)}
               </button>
               <div class="flex-1 min-w-0">
                 <h4 class="text-sm font-bold text-slate-100 truncate">${esc(rec.description)}</h4>
@@ -1174,7 +1533,7 @@
         container.innerHTML += `
           <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border border-slate-800/80 hover:bg-slate-800/40 transition">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
-              <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-5 h-5"></i>
+              ${tileIcon(t, isIncome)}
             </div>
             <div class="flex-1 min-w-0">
               <h4 class="text-sm font-bold text-slate-100 truncate">${esc(t.description)}</h4>
@@ -1537,7 +1896,7 @@
         const d = parseInt(t.date.slice(8, 10), 10);
         if (!days[d]) return;
         days[d].push({ tx: t, rule: null, date: t.date, type: t.type, amount: t.amount, description: t.description,
-                       category: t.category, periodicity: t.periodicity || null, paid: isPaid(t) });
+                       category: t.category, emoji: t.emoji || '', periodicity: t.periodicity || null, paid: isPaid(t) });
       });
 
       const keys = paidKeySet();
@@ -1545,7 +1904,7 @@
         occurrencesInMonth(r, y, m).forEach(date => {
           if (keys.has(r.id + '|' + date)) return;
           days[parseInt(date.slice(8, 10), 10)].push({ tx: null, rule: r, date, type: r.type, amount: r.amount,
-            description: r.description, category: r.category, periodicity: r.periodicity, paid: false });
+            description: r.description, category: r.category, emoji: r.emoji || '', periodicity: r.periodicity, paid: false });
         });
       });
 
@@ -1701,7 +2060,7 @@
             <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border border-slate-800/80">
               <button onclick="toggleDayItem(${i})" aria-label="Alternar pago" class="flex-shrink-0 active:scale-90 transition">${box}</button>
               <div class="flex-1 min-w-0">
-                <h4 class="text-xs font-bold text-slate-200 truncate">${esc(it.description)}</h4>
+                <h4 class="text-xs font-bold text-slate-200 truncate">${it.emoji ? `<span class="emo" aria-hidden="true">${esc(it.emoji)}</span> ` : ''}${esc(it.description)}</h4>
                 <div class="flex items-center flex-wrap gap-1.5 mt-0.5">
                   <span class="text-[11px] text-slate-400">${esc(it.category)}</span>
                   <span class="text-[11px] font-bold ${statusCls}">${status}</span>
@@ -1743,6 +2102,7 @@
           type: it.rule.type,
           date: it.date,
           category: it.rule.category,
+          emoji: it.rule.emoji || '',
           periodicity: it.rule.periodicity,
           recurringId: it.rule.id,
           dueDate: it.date,
@@ -1801,7 +2161,7 @@
         const el = document.getElementById(id);
         if (el) el.addEventListener('click', e => { if (e.target === el) backdrop[id](); });
       });
-      const order = ['modalConfirm', 'modalReset', 'modalCategoryEdit', 'modalTransaction', 'modalRecurring', 'modalBudgets', 'modalDay', 'modalSettings'];
+      const order = ['modalEmoji', 'modalConfirm', 'modalReset', 'modalCategoryEdit', 'modalTransaction', 'modalRecurring', 'modalBudgets', 'modalDay', 'modalSettings'];
       document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
         const open = order.find(id => !document.getElementById(id).classList.contains('hidden'));
@@ -1811,6 +2171,12 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      applyTheme();
+      updateThemeUI();
+      try {
+        const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
+        if (mq && mq.addEventListener) mq.addEventListener('change', () => { if (getThemePref() === 'auto') { applyTheme(); renderAll(); } });
+      } catch (e) {}
       setupGlobalHandlers();
       loadState();
       renderAll();
