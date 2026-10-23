@@ -1584,6 +1584,42 @@
       refreshIcons();
     }
 
+    // recorrências que ainda não viraram lançamento (agendadas/atrasadas) também aparecem no extrato
+    function scheduledForExtrato(monthFilter) {
+      const months = monthFilter && monthFilter !== 'ALL'
+        ? [monthFilter]
+        : Array.from(new Set(state.transactions.map(t => (t.date || '').substring(0, 7)).filter(Boolean).concat(todayStr().slice(0, 7))));
+      const keys = paidKeySet();
+      const out = [];
+      state.recurring.filter(r => r.active).forEach(r => {
+        months.forEach(ym => {
+          occurrencesInMonth(r, +ym.slice(0, 4), +ym.slice(5, 7) - 1).forEach(date => {
+            if (keys.has(r.id + '|' + date)) return;
+            out.push({ id: 'v|' + r.id + '|' + date, virtual: true, ruleId: r.id, description: r.description, amount: r.amount,
+                       type: r.type, date, category: r.category, emoji: r.emoji || '', periodicity: r.periodicity, paid: false });
+          });
+        });
+      });
+      return out;
+    }
+
+    function payOccurrence(ruleId, date) {
+      const r = state.recurring.find(x => x.id === ruleId);
+      if (!r) return;
+      state.transactions.unshift({
+        id: 'tx-' + Date.now(), description: r.description, amount: r.amount, type: r.type, date,
+        category: r.category, emoji: r.emoji || '', periodicity: r.periodicity,
+        recurringId: r.id, dueDate: date, paid: true
+      });
+      saveState();
+      showToast(`"${r.description}" de ${formatDate(date)} pago e registrado.`);
+    }
+
+    function nextMonthStr() {
+      const t = todayStr(); const y = +t.slice(0, 4), m = +t.slice(5, 7);
+      return m === 12 ? `${y + 1}-01` : `${y}-${pad2(m + 1)}`;
+    }
+
     let txView = 'all';
     function updateTxChips() {
       document.querySelectorAll('#txTypeChips [data-v]').forEach(b => {
@@ -1607,7 +1643,7 @@
       const monthFilter = document.getElementById('filterMonth').value;
       const catFilter = document.getElementById('filterCategory').value;
 
-      let filtered = [...state.transactions];
+      let filtered = [...state.transactions, ...scheduledForExtrato(monthFilter)];
 
       if (monthFilter && monthFilter !== 'ALL') {
         filtered = filtered.filter(t => (t.date || '').startsWith(monthFilter));
@@ -1648,7 +1684,10 @@
       filtered.forEach(t => {
         const isIncome = t.type === 'income';
         const badges = [
-          t.paid === false ? '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-amber-300 bg-amber-500/15 border-amber-500/30">Pendente</span>' : '',
+          t.virtual ? (t.date < todayStr()
+            ? '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-rose-300 bg-rose-500/15 border-rose-500/30">Atrasado</span>'
+            : '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-sky-300 bg-sky-500/15 border-sky-500/30">Agendado</span>') : '',
+          t.paid === false && !t.virtual ? '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-amber-300 bg-amber-500/15 border-amber-500/30">Pendente</span>' : '',
           t.periodicity ? periodBadge(t.periodicity) : (/\(Recorrente\)$/.test(t.description) ? '<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border text-slate-300 bg-slate-500/15 border-slate-500/30"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>' : '')
         ].join('');
         container.innerHTML += `
@@ -1666,12 +1705,17 @@
                 <p class="text-sm font-bold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${isIncome ? '+' : '-'} ${formatCurrency(t.amount)}</p>
                 <p class="text-[11px] text-slate-500">${formatDate(t.date)}</p>
               </div>
-              <button onclick="editTransaction('${t.id}')" title="Editar" aria-label="Editar" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-400 active:bg-slate-800">
+${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.date}')" title="Marcar como pago" aria-label="Marcar como pago" class="w-9 h-9 rounded-lg flex items-center justify-center text-emerald-400 active:bg-slate-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+              </button>
+              <button onclick="editRecurring('${t.ruleId}')" title="Editar recorrência" aria-label="Editar recorrência" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-400 active:bg-slate-800">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+              </button>` : `<button onclick="editTransaction('${t.id}')" title="Editar" aria-label="Editar" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-400 active:bg-slate-800">
                 <i data-lucide="pencil" class="w-4 h-4"></i>
               </button>
               <button onclick="deleteTransaction('${t.id}')" title="Excluir" aria-label="Excluir" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-400 active:bg-slate-800">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
+              </button>`}
             </div>
           </div>
         `;
@@ -1713,7 +1757,7 @@
       const prevCat = catSelect.value;
 
       // Extract Unique Months
-      const months = Array.from(new Set(state.transactions.map(t => (t.date || '').substring(0, 7)).filter(Boolean))).sort().reverse();
+      const months = Array.from(new Set(state.transactions.map(t => (t.date || '').substring(0, 7)).filter(Boolean).concat(todayStr().slice(0, 7), nextMonthStr()))).sort().reverse();
       monthSelect.innerHTML = `<option value="ALL">Todos os Meses</option>` + 
         months.map(m => `<option value="${m}">${m.slice(5)}/${m.slice(0, 4)}</option>`).join('');
 
@@ -2299,6 +2343,8 @@
       loadState();
       renderAll();
       setCatIcon('cat', 'shopping-bag');
+      document.getElementById('filterMonth').value = todayStr().slice(0, 7);
+      renderTransactions();
       switchTab('viewDashboard');
     });
   </script>

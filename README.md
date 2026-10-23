@@ -23,7 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
-- **Extrato**: ordenado por data (mais recente primeiro), com busca, filtros por mês, categoria e tipo (receitas, despesas, pendentes) e totais de recebido, pago e saldo do que está filtrado.
+- **Extrato**: abre no mês atual e mostra tudo do mês, pago ou não, inclusive as recorrências agendadas/atrasadas (com botão para marcar como pago); ordenado por data (mais recente primeiro), com busca, filtros por mês, categoria e tipo (receitas, despesas, pendentes) e totais de recebido, pago e saldo do que está filtrado.
 - **Tema claro e escuro**: botão ☀️/🌙 no cabeçalho e opção Automático / Claro / Escuro em Configurações > Aparência (segue o sistema; padrão: escuro).
 - **Ícones (emojis) nos lançamentos**: escolha um ícone ao criar/editar lançamentos e recorrências em um painel de emojis estilo WhatsApp (rolagem contínua, abas por categoria, busca, recentes e sugestão automática pela descrição). Aparece no extrato, nas recorrências e no calendário do dia.
 
