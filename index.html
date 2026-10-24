@@ -583,9 +583,18 @@
           </div>
           <div>
             <label class="text-[11px] font-medium text-slate-400 mb-1 block">Categoria</label>
-            <select id="recCategory" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
-              <!-- Dynamic -->
-            </select>
+            <div class="flex gap-2">
+              <select id="recCategory" required class="flex-1 min-w-0 w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+                <!-- Dynamic -->
+              </select>
+              <button type="button" onclick="toggleRecNewCategory()" aria-label="Nova categoria" title="Nova categoria" class="w-11 flex-shrink-0 rounded-xl bg-slate-900/90 border border-slate-800 text-emerald-400 flex items-center justify-center active:scale-95">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+              </button>
+            </div>
+            <div id="recNewCatBox" class="hidden mt-2 flex gap-2">
+              <input type="text" id="recNewCatName" maxlength="40" placeholder="Nome da nova categoria" onkeydown="if(event.key==='Enter'){event.preventDefault();createCategoryFromRec();}" class="flex-1 min-w-0 bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+              <button type="button" onclick="createCategoryFromRec()" class="px-3.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold active:scale-95">Criar</button>
+            </div>
           </div>
         </div>
 
@@ -1356,6 +1365,33 @@
       }
       catSelect.innerHTML = html;
       if (selected) catSelect.value = selected;
+    }
+
+    // NOVA CATEGORIA a partir da recorrência (usa o tipo marcado: receita ou despesa)
+    function toggleRecNewCategory() {
+      const box = document.getElementById('recNewCatBox');
+      box.classList.toggle('hidden');
+      if (!box.classList.contains('hidden')) document.getElementById('recNewCatName').focus();
+    }
+
+    function createCategoryFromRec() {
+      const name = document.getElementById('recNewCatName').value.trim();
+      let type = 'expense';
+      document.getElementsByName('recType').forEach(r => { if (r.checked) type = r.value; });
+      if (!name) { showToast('Digite o nome da categoria.', 'error'); return; }
+      const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        if (existing.type !== type) { showToast('Essa categoria já existe com outro tipo.', 'error'); return; }
+      } else {
+        state.categories.push({ id: 'cat-' + Date.now(), name, type, icon: 'shopping-bag', budget: 0 });
+      }
+      const finalName = existing ? existing.name : name;
+      fillRecCategories(finalName);
+      document.getElementById('recCategory').value = finalName;
+      document.getElementById('recNewCatName').value = '';
+      document.getElementById('recNewCatBox').classList.add('hidden');
+      saveState();
+      showToast(existing ? 'Categoria já existia, selecionada.' : 'Categoria criada.');
     }
 
     function openRecurringModal() {
