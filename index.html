@@ -241,6 +241,7 @@
           <span id="summaryMonth" class="text-[11px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full"></span>
         </div>
         <h2 id="totalBalance" class="relative text-4xl font-extrabold text-ink mt-2 tracking-tight">R$ 0,00</h2>
+        <button onclick="openAdjustModal()" class="relative mt-2 text-xs font-semibold text-emerald-400 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 active:scale-95">Ajustar saldo</button>
 
         <div class="relative grid grid-cols-2 gap-2.5 mt-5">
           <div class="rounded-2xl bg-slate-900/50 border border-slate-800 p-3 flex items-center gap-2.5">
@@ -587,6 +588,42 @@
   </div>
 
   <!-- MODAL: SETTINGS & BACKUP & CATEGORY CREATION -->
+  <div id="modalAdjust" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+    <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-ink">Ajustar saldo</h3>
+        <button onclick="closeModal('modalAdjust')" class="p-1 rounded-lg text-slate-400 hover:text-ink" aria-label="Fechar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="formAdjust" onsubmit="handleAdjust(event)" class="space-y-3.5">
+        <p class="text-xs text-slate-400">Saldo atual no app: <span id="adjCurrent" class="font-bold text-slate-200"></span></p>
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 mb-1 block">Saldo real da conta (R$)</label>
+          <input type="number" step="0.01" id="adjReal" required placeholder="0,00" oninput="updateAdjustPreview()" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+        </div>
+        <p id="adjPreview" class="text-xs text-slate-400"></p>
+        <div id="adjFields" class="space-y-3.5">
+          <div>
+            <label class="text-[11px] font-medium text-slate-400 mb-1 block">Descrição</label>
+            <input type="text" id="adjDescription" value="Acerto de saldo" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] font-medium text-slate-400 mb-1 block">Data</label>
+              <input type="date" id="adjDate" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="text-[11px] font-medium text-slate-400 mb-1 block">Categoria</label>
+              <select id="adjCategory" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500"></select>
+            </div>
+          </div>
+        </div>
+        <button id="adjSubmit" type="submit" class="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold active:scale-95">Salvar ajuste</button>
+      </form>
+    </div>
+  </div>
+
   <div id="modalSettings" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
     <div class="glass-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -1341,6 +1378,71 @@
     }
 
     // FORM HANDLERS
+    // AJUSTE DE SALDO: cria um lançamento comum com a diferença entre o saldo real e o do app
+    function adjustDiff() {
+      const real = parseFloat(document.getElementById('adjReal').value);
+      if (isNaN(real)) return null;
+      const current = computeTotals().balance;
+      return Math.round((real - current) * 100) / 100;
+    }
+
+    function fillAdjustCategories(type) {
+      const sel = document.getElementById('adjCategory');
+      sel.innerHTML = state.categories.filter(c => c.type === type)
+        .map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+    }
+
+    function updateAdjustPreview() {
+      const diff = adjustDiff();
+      const p = document.getElementById('adjPreview');
+      const btn = document.getElementById('adjSubmit');
+      if (diff === null) { p.innerText = ''; return; }
+      if (Math.abs(diff) < 0.005) {
+        p.innerText = 'O saldo do app já bate com o valor informado. Nada a ajustar.';
+        btn.disabled = true;
+        return;
+      }
+      btn.disabled = false;
+      const type = diff > 0 ? 'income' : 'expense';
+      p.innerText = `Vai criar uma ${type === 'income' ? 'receita' : 'despesa'} de ${formatCurrency(Math.abs(diff))}.`;
+      const cur = document.getElementById('adjCategory').dataset.type;
+      if (cur !== type) {
+        fillAdjustCategories(type);
+        document.getElementById('adjCategory').dataset.type = type;
+      }
+    }
+
+    function openAdjustModal() {
+      document.getElementById('formAdjust').reset();
+      document.getElementById('adjCurrent').innerText = formatCurrency(computeTotals().balance);
+      document.getElementById('adjDate').value = todayStr();
+      document.getElementById('adjDescription').value = 'Acerto de saldo';
+      fillAdjustCategories('expense');
+      document.getElementById('adjCategory').dataset.type = 'expense';
+      document.getElementById('adjPreview').innerText = '';
+      openModal('modalAdjust');
+    }
+
+    function handleAdjust(e) {
+      e.preventDefault();
+      const diff = adjustDiff();
+      if (diff === null || Math.abs(diff) < 0.005) return;
+      const type = diff > 0 ? 'income' : 'expense';
+      state.transactions.unshift({
+        id: 'tx-' + Date.now(),
+        description: document.getElementById('adjDescription').value.trim() || 'Acerto de saldo',
+        amount: Math.abs(diff),
+        type,
+        date: document.getElementById('adjDate').value,
+        category: document.getElementById('adjCategory').value,
+        paid: true,
+        emoji: ''
+      });
+      saveState();
+      closeModal('modalAdjust');
+      document.getElementById('formAdjust').reset();
+    }
+
     function handleSaveTransaction(e) {
       e.preventDefault();
       const editId = document.getElementById('txId').value;
