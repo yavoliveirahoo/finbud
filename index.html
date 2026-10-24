@@ -497,9 +497,18 @@
 
         <div>
           <label class="text-[11px] font-medium text-slate-400 mb-1 block">Categoria</label>
-          <select id="txCategory" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
-            <!-- Dynamic Categories -->
-          </select>
+          <div class="flex gap-2">
+            <select id="txCategory" required class="flex-1 min-w-0 w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+              <!-- Dynamic Categories -->
+            </select>
+            <button type="button" onclick="toggleNewCategory()" aria-label="Nova categoria" title="Nova categoria" class="w-11 flex-shrink-0 rounded-xl bg-slate-900/90 border border-slate-800 text-emerald-400 flex items-center justify-center active:scale-95">
+              <i data-lucide="plus" class="w-5 h-5"></i>
+            </button>
+          </div>
+          <div id="newCatBox" class="hidden mt-2 flex gap-2">
+            <input type="text" id="newCatName" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();createCategoryFromTx();}" placeholder="Nome da nova categoria" class="flex-1 min-w-0 bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
+            <button type="button" onclick="createCategoryFromTx()" class="px-3.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold active:scale-95">Criar</button>
+          </div>
         </div>
 
         <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900/50 cursor-pointer">
@@ -1441,6 +1450,31 @@
       saveState();
       closeModal('modalAdjust');
       document.getElementById('formAdjust').reset();
+    }
+
+    // NOVA CATEGORIA a partir do lançamento (usa o tipo do lançamento: receita ou despesa)
+    function toggleNewCategory() {
+      const box = document.getElementById('newCatBox');
+      box.classList.toggle('hidden');
+      if (!box.classList.contains('hidden')) document.getElementById('newCatName').focus();
+    }
+
+    function createCategoryFromTx() {
+      const name = document.getElementById('newCatName').value.trim();
+      const type = document.getElementById('txType').value;
+      if (!name) { showToast('Digite o nome da categoria.', 'error'); return; }
+      const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        if (existing.type !== type) { showToast('Essa categoria já existe com outro tipo.', 'error'); return; }
+      } else {
+        state.categories.push({ id: 'cat-' + Date.now(), name, type, icon: 'shopping-bag', budget: 0 });
+      }
+      fillTxCategories(type, existing ? existing.name : name);
+      document.getElementById('txCategory').value = existing ? existing.name : name;
+      document.getElementById('newCatName').value = '';
+      document.getElementById('newCatBox').classList.add('hidden');
+      saveState();
+      showToast(existing ? 'Categoria já existia, selecionada.' : 'Categoria criada.');
     }
 
     function handleSaveTransaction(e) {
