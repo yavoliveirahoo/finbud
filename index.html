@@ -1428,6 +1428,19 @@
       });
     }
 
+    function deleteFromDay(id) {
+      const t = state.transactions.find(x => x.id === id);
+      if (!t) return;
+      askConfirm({
+        title: 'Apagar lançamento?',
+        text: `Você tem certeza que quer apagar este lançamento? ${t.description} · ${formatCurrency(t.amount)}`,
+        okLabel: 'Apagar'
+      }, () => {
+        state.transactions = state.transactions.filter(x => x.id !== id);
+        saveState();
+      });
+    }
+
     function deleteTransaction(id) {
       const t = state.transactions.find(x => x.id === id);
       if (!t) return;
@@ -2366,6 +2379,9 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
               <button onclick="${edit}" title="${it.tx ? 'Editar' : 'Editar regra recorrente'}" class="p-1.5 rounded-lg text-slate-500 hover:text-sky-400 flex-shrink-0">
                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
               </button>
+              ${it.tx ? `<button onclick="deleteFromDay('${it.tx.id}')" title="Apagar lançamento" aria-label="Apagar lançamento" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 flex-shrink-0">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>` : ''}
             </div>`;
         }).join('');
       }
