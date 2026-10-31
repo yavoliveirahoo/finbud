@@ -3175,12 +3175,48 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
         const el = document.getElementById(id);
         if (el) el.addEventListener('click', e => { if (e.target === el) backdrop[id](); });
       });
-      const order = ['modalEmoji', 'modalConfirm', 'modalReset', 'modalCategoryEdit', 'modalTransaction', 'modalRecurring', 'modalBudgets', 'modalDay', 'modalSettings'];
-      document.addEventListener('keydown', e => {
-        if (e.key !== 'Escape') return;
-        const open = order.find(id => !document.getElementById(id).classList.contains('hidden'));
-        if (!open) return;
-        if (open === 'modalConfirm') confirmCancel(); else closeModal(open);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTopModal(); });
+      setupBackButton();
+    }
+
+    // ===== botão VOLTAR do Android =====
+    // fecha a janela aberta -> volta para a tela inicial -> na tela inicial, 2 toques seguidos para sair
+    const MODAL_ORDER = ['modalEmoji', 'modalConfirm', 'modalReset', 'modalCategoryEdit', 'modalTransaction', 'modalRecurring', 'modalBudgets', 'modalAdjust', 'modalDay', 'modalSettings'];
+    function closeTopModal() {
+      const open = MODAL_ORDER.find(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+      if (!open) return false;
+      if (open === 'modalConfirm') confirmCancel(); else closeModal(open);
+      return true;
+    }
+
+    let backExitArmed = false, backExitTimer = null;
+    function exitApp() { history.back(); }
+    function handleBackPress() {
+      if (closeTopModal()) return 'modal';
+      const dash = document.getElementById('viewDashboard');
+      if (dash && dash.classList.contains('hidden')) { switchTab('viewDashboard'); return 'tab'; }
+      if (backExitArmed) {
+        backExitArmed = false; clearTimeout(backExitTimer);
+        exitApp();
+        return 'exit';
+      }
+      backExitArmed = true;
+      showToast('Toque em voltar novamente para sair');
+      backExitTimer = setTimeout(() => { backExitArmed = false; }, 2000);
+      return 'armed';
+    }
+
+    function setupBackButton() {
+      if (!window.history || !history.pushState) return;
+      try {
+        history.replaceState({ finbud: 'root' }, '');
+        history.pushState({ finbud: 'guard' }, '');
+      } catch (e) { return; }
+      window.addEventListener('popstate', e => {
+        if (!e.state || e.state.finbud !== 'root') return; // ignora outras navegações (ex.: link de recuperação)
+        if (handleBackPress() !== 'exit') {
+          try { history.pushState({ finbud: 'guard' }, ''); } catch (err) {}
+        }
       });
     }
 
