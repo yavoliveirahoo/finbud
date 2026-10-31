@@ -231,6 +231,9 @@
 
     <!-- VIEW 1: DASHBOARD -->
     <section id="viewDashboard" class="space-y-4">
+      <!-- AVISOS (fatura e orçamento) -->
+      <div id="alertsBox" class="space-y-2 empty:hidden" role="region" aria-label="Avisos"></div>
+
       <!-- SUMMARY CARD -->
       <div class="glass-card rounded-3xl p-5 relative overflow-hidden shadow-2xl border border-emerald-500/20">
         <div class="absolute -right-8 -top-8 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
@@ -1790,6 +1793,8 @@
       balEl.classList.toggle('text-rose-300', totals.balance < 0);
       balEl.classList.toggle('text-ink', totals.balance >= 0);
 
+      renderAlerts();
+
       // previsão real para o fim do mês: usa o mesmo cálculo do calendário (pendentes + recorrências)
       const md = buildMonthData(calView.y, calView.m);
       document.getElementById('projectedBalance').innerText = formatCurrency(md.info[md.dim].balance);
@@ -2305,6 +2310,79 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       return state.transactions
         .filter(t => t.category === catName && countsInMonth(t, ym))
         .reduce((sum, t) => sum + t.amount, 0);
+    }
+
+    // ===== AVISOS: faturas perto de vencer e categorias perto do limite =====
+    const ALERT_DAYS = 7;        // avisa faturas que vencem nos próximos 7 dias (ou já vencidas)
+    const ALERT_BUDGET_PCT = 90; // avisa categoria a partir de 90% do limite
+    const ALERT_KEY = 'finbud_alerts_dismissed';
+    let currentAlerts = [];
+
+    function dismissedAlerts() {
+      try { const o = JSON.parse(localStorage.getItem(ALERT_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; }
+    }
+    function dismissAlert(i) {
+      const a = currentAlerts[i];
+      if (!a) return;
+      try {
+        const o = dismissedAlerts();
+        const cutoff = todayStr().slice(0, 7);
+        Object.keys(o).forEach(k => { if (o[k] < cutoff) delete o[k]; }); // limpa avisos de meses antigos
+        o[a.key] = todayStr().slice(0, 7);
+        localStorage.setItem(ALERT_KEY, JSON.stringify(o));
+      } catch (e) {}
+      renderAlerts();
+    }
+
+    function buildAlerts() {
+      const today = todayStr();
+      const ym = today.slice(0, 7);
+      const out = [];
+      const t0 = new Date(today + 'T00:00:00');
+
+      faturaGroups().forEach(g => {
+        const open = g.total - g.paidTotal;
+        if (g.allPaid || open <= 0.004) return;
+        const diff = Math.round((new Date(g.due + 'T00:00:00') - t0) / 86400000);
+        if (diff > ALERT_DAYS) return;
+        const when = diff < 0 ? `venceu há ${-diff} ${-diff === 1 ? 'dia' : 'dias'}` : diff === 0 ? 'vence hoje' : diff === 1 ? 'vence amanhã' : `vence em ${diff} dias`;
+        out.push({ key: `fat|${g.card.id}|${g.month}|${today}`, level: diff <= 0 ? 'danger' : 'warn', sort: diff, icon: '💳',
+          text: `Fatura ${g.card.name} ${when}: ${formatCurrency(open)}`,
+          action: `goToFatura('${esc(g.card.id)}','${g.month}')` });
+      });
+
+      state.categories.filter(c => c.type === 'expense' && c.budget > 0).forEach(c => {
+        const spent = spentThisMonth(c.name, ym);
+        const pct = (spent / c.budget) * 100;
+        if (pct < ALERT_BUDGET_PCT) return;
+        const over = spent > c.budget;
+        out.push({ key: `bud|${c.id}|${ym}|${over ? 'over' : 'near'}`, level: over ? 'danger' : 'warn', sort: 100 - pct, icon: '🎯',
+          text: over
+            ? `${c.name} estourou o limite: ${formatCurrency(spent)} de ${formatCurrency(c.budget)} (+${formatCurrency(spent - c.budget)})`
+            : `${c.name} em ${Math.floor(pct)}% do limite: ${formatCurrency(spent)} de ${formatCurrency(c.budget)}`,
+          action: `openBudgetModal('${esc(c.id)}')` });
+      });
+
+      const hidden = dismissedAlerts();
+      return out.filter(a => !hidden[a.key]).sort((a, b) => (a.level === b.level ? a.sort - b.sort : a.level === 'danger' ? -1 : 1));
+    }
+
+    function renderAlerts() {
+      const box = document.getElementById('alertsBox');
+      if (!box) return;
+      currentAlerts = buildAlerts();
+      const MAX = 4;
+      const shown = currentAlerts.slice(0, MAX);
+      box.innerHTML = shown.map((a, i) => {
+        const cls = a.level === 'danger' ? 'bg-rose-500/10 border-rose-500/40 text-rose-300' : 'bg-amber-500/10 border-amber-500/40 text-amber-300';
+        return `<div class="flex items-stretch rounded-2xl border ${cls}" role="alert">
+            <button type="button" onclick="${a.action}" class="flex-1 min-w-0 flex items-center gap-2.5 text-left px-3 py-2.5 active:opacity-70">
+              <span class="emo text-lg leading-none flex-shrink-0" aria-hidden="true">${a.icon}</span>
+              <span class="text-xs font-semibold leading-snug">${esc(a.text)}</span>
+            </button>
+            <button type="button" onclick="dismissAlert(${i})" aria-label="Dispensar aviso" title="Dispensar" class="px-3 flex items-center opacity-70 active:opacity-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>`;
+      }).join('') + (currentAlerts.length > MAX ? `<p class="text-[11px] text-slate-500 text-center">e mais ${currentAlerts.length - MAX} ${currentAlerts.length - MAX === 1 ? 'aviso' : 'avisos'}</p>` : '');
     }
 
     function openBudgetModal(focusId) {
