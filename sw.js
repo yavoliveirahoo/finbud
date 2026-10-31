@@ -1,4 +1,4 @@
-const CACHE = 'finbud-v16';
+const CACHE = 'finbud-v17';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 
 self.addEventListener('install', e => {

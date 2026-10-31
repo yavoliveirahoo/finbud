@@ -356,11 +356,6 @@
           </h3>
           <button onclick="openBudgetModal()" class="text-xs text-emerald-400 font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 active:scale-95 flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Ajustar</button>
         </div>
-        <div class="flex items-center justify-between rounded-xl bg-slate-900/50 border border-slate-800 px-1 py-1">
-          <button onclick="budgetShift(-1)" aria-label="Mês anterior" class="p-2 rounded-lg text-slate-300 active:scale-90"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-          <button id="budgetMonthLabel" onclick="budgetShift(0)" title="Voltar ao mês atual" class="text-xs font-bold text-slate-200 px-3 py-1.5 rounded-lg"></button>
-          <button onclick="budgetShift(1)" aria-label="Próximo mês" class="p-2 rounded-lg text-slate-300 active:scale-90"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-        </div>
         <div id="budgetProgressList" class="space-y-3 pt-1">
           <!-- Injected dynamically -->
         </div>
@@ -1796,14 +1791,21 @@
       balEl.classList.toggle('text-ink', totals.balance >= 0);
 
       // previsão real para o fim do mês: usa o mesmo cálculo do calendário (pendentes + recorrências)
-      const now = new Date();
-      const md = buildMonthData(now.getFullYear(), now.getMonth());
+      const md = buildMonthData(calView.y, calView.m);
       document.getElementById('projectedBalance').innerText = formatCurrency(md.info[md.dim].balance);
-      document.getElementById('summaryMonth').innerText = monthLabel(now.getFullYear(), now.getMonth()).replace(' de ', ' ');
+      document.getElementById('summaryMonth').innerText = monthLabel(calView.y, calView.m).replace(' de ', ' ');
+      // receitas e despesas do mês selecionado (mesma regra do gráfico/orçamento)
+      const ym = selMonth();
+      let mIncome = 0, mExpense = 0;
+      state.transactions.forEach(t => {
+        if (t.type === 'income') { if (t.paid !== false && (t.date || '').startsWith(ym)) mIncome += t.amount; }
+        else if (countsInMonth(t, ym)) mExpense += t.amount;
+      });
+      document.getElementById('totalIncome').innerText = formatCurrency(mIncome);
+      document.getElementById('totalExpense').innerText = formatCurrency(mExpense);
 
       // Limites de orçamento (toque numa linha para ajustar aquela categoria)
       const budgetContainer = document.getElementById('budgetProgressList');
-      document.getElementById('budgetMonthLabel').innerText = monthLabel(+budgetMonth.slice(0, 4), +budgetMonth.slice(5, 7) - 1).replace(' de ', ' ') + (budgetMonth === todayStr().slice(0, 7) ? ' · atual' : '');
       const withBudget = state.categories.filter(c => c.type === 'expense' && c.budget > 0);
 
       if (withBudget.length === 0) {
@@ -1845,12 +1847,12 @@
       // Group expenses by category
       const expenseMap = {};
       state.transactions
-        .filter(t => countsInMonth(t, budgetMonth))
+        .filter(t => countsInMonth(t, selMonth()))
         .forEach(t => {
           expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
         });
       const chartLbl = document.getElementById('chartMonthLabel');
-      if (chartLbl) chartLbl.innerText = budgetMonth === todayStr().slice(0, 7) ? 'Mês Atual' : monthLabel(+budgetMonth.slice(0, 4), +budgetMonth.slice(5, 7) - 1).replace(' de ', ' ');
+      if (chartLbl) chartLbl.innerText = selMonth() === todayStr().slice(0, 7) ? 'Mês Atual' : monthLabel(+selMonth().slice(0, 4), +selMonth().slice(5, 7) - 1).replace(' de ', ' ');
 
       const labels = Object.keys(expenseMap);
       const data = Object.values(expenseMap);
@@ -2289,18 +2291,8 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     }
 
     // ===== ORÇAMENTOS E CATEGORIAS =====
-    // mês exibido no card de orçamento (AAAA-MM); padrão: mês atual
-    let budgetMonth = todayStr().slice(0, 7);
-    function budgetShift(delta) {
-      if (delta === 0) budgetMonth = todayStr().slice(0, 7);
-      else {
-        let y = +budgetMonth.slice(0, 4), m = +budgetMonth.slice(5, 7) - 1 + delta;
-        while (m < 0) { m += 12; y--; }
-        while (m > 11) { m -= 12; y++; }
-        budgetMonth = `${y}-${pad2(m + 1)}`;
-      }
-      renderAll();
-    }
+    // mês selecionado no calendário (AAAA-MM): manda no resumo, gráfico e orçamento
+    function selMonth() { return `${calView.y}-${pad2(calView.m + 1)}`; }
 
     // gasto da categoria no mês: despesas comuns pagas pela data; compras no cartão pelo mês da FATURA (pagas ou não)
     function countsInMonth(t, ym) {
@@ -2309,7 +2301,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       return card ? faturaOf(t.date, card) === ym : (t.paid !== false && t.date.startsWith(ym));
     }
     function spentThisMonth(catName, ym) {
-      ym = ym || budgetMonth;
+      ym = ym || selMonth();
       return state.transactions
         .filter(t => t.category === catName && countsInMonth(t, ym))
         .reduce((sum, t) => sum + t.amount, 0);
@@ -2340,7 +2332,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
           </div>
           <div class="flex-1 min-w-0">
             <label for="bud-${esc(c.id)}" class="block text-sm font-semibold text-slate-100 truncate">${esc(c.name)}</label>
-            <p class="text-[11px] text-slate-400">Gasto em ${budgetMonth.slice(5)}/${budgetMonth.slice(0, 4)}: ${formatCurrency(spentThisMonth(c.name))}</p>
+            <p class="text-[11px] text-slate-400">Gasto em ${selMonth().slice(5)}/${selMonth().slice(0, 4)}: ${formatCurrency(spentThisMonth(c.name))}</p>
           </div>
           <div class="relative w-32 flex-shrink-0">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">R$</span>
@@ -2719,13 +2711,13 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       if (m < 0) { m = 11; y--; }
       if (m > 11) { m = 0; y++; }
       calView.m = m; calView.y = y;
-      renderCalendar();
+      renderAll();
     }
 
     function calToday() {
       const d = new Date();
       calView.y = d.getFullYear(); calView.m = d.getMonth();
-      renderCalendar();
+      renderAll();
     }
 
     (function enableCalendarSwipe() {
