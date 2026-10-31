@@ -356,9 +356,15 @@
           </h3>
           <button onclick="openBudgetModal()" class="text-xs text-emerald-400 font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 active:scale-95 flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Ajustar</button>
         </div>
+        <div class="flex items-center justify-between rounded-xl bg-slate-900/50 border border-slate-800 px-1 py-1">
+          <button onclick="budgetShift(-1)" aria-label="Mês anterior" class="p-2 rounded-lg text-slate-300 active:scale-90"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+          <button id="budgetMonthLabel" onclick="budgetShift(0)" title="Voltar ao mês atual" class="text-xs font-bold text-slate-200 px-3 py-1.5 rounded-lg"></button>
+          <button onclick="budgetShift(1)" aria-label="Próximo mês" class="p-2 rounded-lg text-slate-300 active:scale-90"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+        </div>
         <div id="budgetProgressList" class="space-y-3 pt-1">
           <!-- Injected dynamically -->
         </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed"><span class="emo">💳</span> Compras no cartão contam no mês da fatura, mesmo antes de pagar.</p>
       </div>
     </section>
 
@@ -1797,6 +1803,7 @@
 
       // Limites de orçamento (toque numa linha para ajustar aquela categoria)
       const budgetContainer = document.getElementById('budgetProgressList');
+      document.getElementById('budgetMonthLabel').innerText = monthLabel(+budgetMonth.slice(0, 4), +budgetMonth.slice(5, 7) - 1).replace(' de ', ' ') + (budgetMonth === todayStr().slice(0, 7) ? ' · atual' : '');
       const withBudget = state.categories.filter(c => c.type === 'expense' && c.budget > 0);
 
       if (withBudget.length === 0) {
@@ -2280,10 +2287,28 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     }
 
     // ===== ORÇAMENTOS E CATEGORIAS =====
-    function spentThisMonth(catName) {
-      const prefix = todayStr().slice(0, 7);
+    // mês exibido no card de orçamento (AAAA-MM); padrão: mês atual
+    let budgetMonth = todayStr().slice(0, 7);
+    function budgetShift(delta) {
+      if (delta === 0) budgetMonth = todayStr().slice(0, 7);
+      else {
+        let y = +budgetMonth.slice(0, 4), m = +budgetMonth.slice(5, 7) - 1 + delta;
+        while (m < 0) { m += 12; y--; }
+        while (m > 11) { m -= 12; y++; }
+        budgetMonth = `${y}-${pad2(m + 1)}`;
+      }
+      renderAll();
+    }
+
+    // gasto da categoria no mês: despesas comuns pagas pela data; compras no cartão pelo mês da FATURA (pagas ou não)
+    function spentThisMonth(catName, ym) {
+      ym = ym || budgetMonth;
       return state.transactions
-        .filter(t => t.paid !== false && t.type === 'expense' && t.category === catName && (t.date || '').startsWith(prefix))
+        .filter(t => {
+          if (t.type !== 'expense' || t.category !== catName || !t.date) return false;
+          const card = cardOfTx(t);
+          return card ? faturaOf(t.date, card) === ym : (t.paid !== false && t.date.startsWith(ym));
+        })
         .reduce((sum, t) => sum + t.amount, 0);
     }
 
@@ -2312,7 +2337,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
           </div>
           <div class="flex-1 min-w-0">
             <label for="bud-${esc(c.id)}" class="block text-sm font-semibold text-slate-100 truncate">${esc(c.name)}</label>
-            <p class="text-[11px] text-slate-400">Gasto no mês: ${formatCurrency(spentThisMonth(c.name))}</p>
+            <p class="text-[11px] text-slate-400">Gasto em ${budgetMonth.slice(5)}/${budgetMonth.slice(0, 4)}: ${formatCurrency(spentThisMonth(c.name))}</p>
           </div>
           <div class="relative w-32 flex-shrink-0">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">R$</span>
