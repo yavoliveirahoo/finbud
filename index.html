@@ -396,6 +396,9 @@
             <option value="ALL">Todas Categorias</option>
           </select>
         </div>
+        <div id="filterCardWrap" class="hidden">
+          <select id="filterCard" onchange="renderTransactions()" aria-label="Filtrar por cartão de crédito" class="glass-card w-full text-xs text-slate-200 rounded-xl px-3 py-2.5 outline-none border border-slate-800 focus:border-emerald-500"></select>
+        </div>
       </div>
 
       <div class="relative">
@@ -408,6 +411,11 @@
         <button type="button" data-v="income" onclick="setTxView('income')" class="py-2 rounded-xl text-[11px] font-bold border transition">Receitas</button>
         <button type="button" data-v="expense" onclick="setTxView('expense')" class="py-2 rounded-xl text-[11px] font-bold border transition">Despesas</button>
         <button type="button" data-v="pending" onclick="setTxView('pending')" class="py-2 rounded-xl text-[11px] font-bold border transition">Pendentes</button>
+      </div>
+
+      <div id="txCardSum" class="hidden glass-card rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs">
+        <span class="text-slate-400"><span class="emo">💳</span> Compras no cartão: <b id="txCardTotal" class="text-ink"></b></span>
+        <span class="text-slate-400">Em aberto: <b id="txCardOpen" class="text-amber-300"></b></span>
       </div>
 
       <div class="grid grid-cols-3 gap-2">
@@ -1991,6 +1999,7 @@
       document.getElementById('filterMonth').value = 'ALL';
       document.getElementById('filterCategory').value = 'ALL';
       document.getElementById('filterSearch').value = '';
+      document.getElementById('filterCard').value = 'ALL';
       renderTransactions();
     }
 
@@ -2008,6 +2017,11 @@
       if (catFilter && catFilter !== 'ALL') {
         filtered = filtered.filter(t => t.category === catFilter);
       }
+
+      const cardFilter = document.getElementById('filterCard').value || 'ALL';
+      if (cardFilter === 'ANY') filtered = filtered.filter(t => !!t.cardId);
+      else if (cardFilter === 'NONE') filtered = filtered.filter(t => !t.cardId);
+      else if (cardFilter !== 'ALL') filtered = filtered.filter(t => t.cardId === cardFilter);
 
       const q = emojiNorm(document.getElementById('filterSearch').value);
       if (q) filtered = filtered.filter(t => emojiNorm((t.description || '') + ' ' + (t.category || '')).includes(q));
@@ -2028,18 +2042,29 @@
       balEl.classList.toggle('text-rose-400', sumIn - sumOut < 0);
       updateTxChips();
 
+      const cardBox = document.getElementById('txCardSum');
+      const showCardSum = cardFilter !== 'ALL' && cardFilter !== 'NONE';
+      cardBox.classList.toggle('hidden', !showCardSum);
+      if (showCardSum) {
+        const onCard = filtered.filter(t => t.cardId && t.type === 'expense');
+        document.getElementById('txCardTotal').innerText = formatCurrency(onCard.reduce((a, t) => a + t.amount, 0));
+        document.getElementById('txCardOpen').innerText = formatCurrency(onCard.filter(t => t.paid === false).reduce((a, t) => a + t.amount, 0));
+      }
+
       document.getElementById('txCountBadge').innerText = `${filtered.length} ${filtered.length === 1 ? 'item' : 'itens'}`;
       container.innerHTML = '';
 
       if (filtered.length === 0) {
-        const filtering = (monthFilter && monthFilter !== 'ALL') || (catFilter && catFilter !== 'ALL') || q || txView !== 'all';
+        const filtering = (monthFilter && monthFilter !== 'ALL') || (catFilter && catFilter !== 'ALL') || cardFilter !== 'ALL' || q || txView !== 'all';
         container.innerHTML = `<div class="text-center py-8 space-y-3"><p class="text-xs text-slate-500">${filtering ? 'Nenhum lançamento com esses filtros.' : 'Nenhum lançamento cadastrado.'}</p>${filtering ? '<button type="button" onclick="clearTxFilters()" class="text-xs font-bold text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 active:scale-95">Limpar filtros</button>' : ''}</div>`;
         return;
       }
 
       filtered.forEach(t => {
         const isIncome = t.type === 'income';
+        const cardRef = t.cardId ? (state.cards || []).find(c => c.id === t.cardId) : null;
         const badges = [
+          t.cardId ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border text-sky-300 bg-sky-500/15 border-sky-500/30"><span class="emo">💳</span>${esc(cardRef ? cardRef.name : 'Cartão')}</span>` : '',
           t.virtual ? (t.date < todayStr()
             ? '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-rose-300 bg-rose-500/15 border-rose-500/30">Atrasado</span>'
             : '<span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border text-sky-300 bg-sky-500/15 border-sky-500/30">Agendado</span>') : '',
@@ -2125,6 +2150,17 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
 
       if ([...monthSelect.options].some(o => o.value === prevMonth)) monthSelect.value = prevMonth;
       if ([...catSelect.options].some(o => o.value === prevCat)) catSelect.value = prevCat;
+
+      // cartões de crédito
+      const cardSel = document.getElementById('filterCard');
+      const cards = state.cards || [];
+      const prevCard = cardSel.value;
+      document.getElementById('filterCardWrap').classList.toggle('hidden', cards.length === 0);
+      cardSel.innerHTML = '<option value="ALL">Cartão: todos os lançamentos</option>' +
+        '<option value="ANY">Cartão: todas as compras no cartão</option>' +
+        cards.map(c => `<option value="${esc(c.id)}">Cartão: ${esc(c.name)}</option>`).join('') +
+        '<option value="NONE">Sem cartão (conta / à vista)</option>';
+      if ([...cardSel.options].some(o => o.value === prevCard)) cardSel.value = prevCard;
     }
 
     // BACKUP & EXPORT/IMPORT
