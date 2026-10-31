@@ -3189,34 +3189,35 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       return true;
     }
 
-    let backExitArmed = false, backExitTimer = null;
-    function exitApp() { history.back(); }
+    // Android/Chrome só respeita entradas de histórico criadas depois de um toque do usuário,
+    // por isso o "guarda" é colocado no primeiro toque (e não ao abrir o app).
+    // Na tela inicial, o 1º "voltar" só avisa e deixa o histórico no começo: o 2º "voltar" fecha o app de verdade.
+    let backExitTimer = null;
     function handleBackPress() {
       if (closeTopModal()) return 'modal';
       const dash = document.getElementById('viewDashboard');
       if (dash && dash.classList.contains('hidden')) { switchTab('viewDashboard'); return 'tab'; }
-      if (backExitArmed) {
-        backExitArmed = false; clearTimeout(backExitTimer);
-        exitApp();
-        return 'exit';
-      }
-      backExitArmed = true;
       showToast('Toque em voltar novamente para sair');
-      backExitTimer = setTimeout(() => { backExitArmed = false; }, 2000);
+      clearTimeout(backExitTimer);
+      backExitTimer = setTimeout(pushBackGuard, 2000); // passou o tempo: volta a proteger o app
       return 'armed';
+    }
+
+    function pushBackGuard() {
+      try {
+        if (history.state && history.state.finbud === 'root') history.pushState({ finbud: 'guard' }, '');
+      } catch (e) {}
     }
 
     function setupBackButton() {
       if (!window.history || !history.pushState) return;
-      try {
-        history.replaceState({ finbud: 'root' }, '');
-        history.pushState({ finbud: 'guard' }, '');
-      } catch (e) { return; }
+      try { history.replaceState({ finbud: 'root' }, ''); } catch (e) { return; }
+      const events = ['pointerdown', 'touchstart', 'click', 'keydown'];
+      const first = () => { events.forEach(ev => window.removeEventListener(ev, first, true)); pushBackGuard(); };
+      events.forEach(ev => window.addEventListener(ev, first, true));
       window.addEventListener('popstate', e => {
         if (!e.state || e.state.finbud !== 'root') return; // ignora outras navegações (ex.: link de recuperação)
-        if (handleBackPress() !== 'exit') {
-          try { history.pushState({ finbud: 'guard' }, ''); } catch (err) {}
-        }
+        if (handleBackPress() !== 'armed') pushBackGuard();
       });
     }
 
