@@ -13,6 +13,7 @@
         var p = localStorage.getItem('finbud_theme') || 'dark';
         var light = p === 'light' || (p === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches);
         if (light) document.documentElement.classList.add('light');
+        if (localStorage.getItem('finbud_lock')) document.documentElement.classList.add('locked');
       } catch (e) {}
     })();
   </script>
@@ -146,9 +147,50 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
     }
+
+    /* ===== Bloqueio do app (PIN / biometria) ===== */
+    #lockGate { display: none; position: fixed; inset: 0; z-index: 200; align-items: center; justify-content: center; background: var(--body); color: rgb(var(--ink)); padding: 20px; overflow-y: auto; }
+    html.locked #lockGate { display: flex; }
+    html.locked body { overflow: hidden; }
+    #lockGate .lk-wrap { width: 100%; max-width: 320px; text-align: center; }
+    #lockGate .lk-icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; background: rgba(16,185,129,.15); color: #10b981; }
+    #lockGate .lk-icon svg { width: 26px; height: 26px; }
+    #lockGate h2 { font-size: 18px; font-weight: 700; }
+    #lockGate #lockSub { font-size: 13px; color: rgb(var(--s400)); margin-top: 4px; min-height: 18px; }
+    #lockGate #lockLen { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+    #lockGate #lockLen button { padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: 1px solid var(--card-b); background: rgb(var(--s800)); color: rgb(var(--s400)); }
+    #lockGate #lockLen button.on { background: #10b981; border-color: #10b981; color: #fff; }
+    #lockGate #lockDots { display: flex; justify-content: center; gap: 14px; margin: 22px 0 8px; }
+    #lockGate .lk-dot { width: 14px; height: 14px; border-radius: 9999px; border: 2px solid rgb(var(--s500)); transition: background .12s, border-color .12s; }
+    #lockGate .lk-dot.on { background: #10b981; border-color: #10b981; }
+    #lockGate #lockDots.err { animation: lkShake .35s; }
+    #lockGate #lockMsg { min-height: 20px; font-size: 13px; color: #f87171; margin-bottom: 8px; }
+    #lockGate #lockPad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px; }
+    #lockGate #lockPad button { height: 62px; border-radius: 18px; font-size: 24px; font-weight: 600; background: rgb(var(--s800)); border: 1px solid var(--card-b); color: rgb(var(--ink)); display: flex; align-items: center; justify-content: center; transition: transform .08s; -webkit-tap-highlight-color: transparent; }
+    #lockGate #lockPad button:active { transform: scale(.94); }
+    #lockGate #lockPad button svg { width: 24px; height: 24px; }
+    #lockGate #lockPad button[hidden] { visibility: hidden; display: flex; }
+    #lockGate .lk-foot { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    #lockGate .lk-foot button { background: none; border: none; font-size: 13px; color: rgb(var(--s400)); text-decoration: underline; }
+    @keyframes lkShake { 0%,100% { transform: none; } 20% { transform: translateX(-9px); } 40% { transform: translateX(9px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-24 selection:bg-emerald-500 selection:text-white">
+  <div id="lockGate" role="dialog" aria-modal="true" aria-label="Bloqueio do app">
+    <div class="lk-wrap">
+      <div class="lk-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <h2 id="lockTitle">Digite seu PIN</h2>
+      <p id="lockSub"></p>
+      <div id="lockLen" style="display:none"><button type="button" data-len="4">4 dígitos</button><button type="button" data-len="6">6 dígitos</button></div>
+      <div id="lockDots" aria-hidden="true"></div>
+      <p id="lockMsg" role="alert"></p>
+      <div id="lockPad"><button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><button type="button" id="lockBio" data-k="bio" aria-label="Usar biometria" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg></button><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Apagar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><path d="m18 9-6 6"/><path d="m12 9 6 6"/></svg></button></div>
+      <div class="lk-foot">
+        <button type="button" id="lockForgot">Esqueci o PIN</button>
+        <button type="button" id="lockCancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
   <div id="loginGate" style="display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;background:#090d16;padding:24px;">
     <form id="loginForm" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;">
       <img src="data:image/png;base64,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" alt="FinBud" width="96" height="96" style="align-self:center;border-radius:22px;">
@@ -806,6 +848,12 @@
         </div>
       </div>
 
+      <!-- SECTION: SECURITY -->
+      <div class="space-y-3 pt-2 border-t border-slate-800">
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Segurança</h4>
+        <div id="lockSettings" class="space-y-2"></div>
+      </div>
+
       <!-- SECTION: BACKUP & RESTORE -->
       <div class="space-y-3 pt-2 border-t border-slate-800">
         <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Backups e Importação</h4>
@@ -1052,6 +1100,7 @@
     }
 
     async function signOut() {
+      try { localStorage.removeItem('finbud_lock'); localStorage.removeItem('finbud_lock_fail'); } catch (e) {}
       await sb.auth.signOut();
       // recarrega a página para não deixar nenhum dado na tela
       location.reload();
@@ -1406,7 +1455,7 @@
     // MODAL CONTROL
     function openModal(id) {
       document.getElementById(id).classList.remove('hidden');
-      if (id === 'modalSettings') renderSettingsCategories();
+      if (id === 'modalSettings') { renderSettingsCategories(); renderLockSettings(); }
     }
 
     function closeModal(id) {
@@ -3183,6 +3232,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     // fecha a janela aberta -> volta para a tela inicial -> na tela inicial, 2 toques seguidos para sair
     const MODAL_ORDER = ['modalEmoji', 'modalConfirm', 'modalReset', 'modalCategoryEdit', 'modalTransaction', 'modalRecurring', 'modalBudgets', 'modalAdjust', 'modalDay', 'modalSettings'];
     function closeTopModal() {
+      if (typeof lockUI !== 'undefined' && lockUI.mode && lockUI.mode !== 'unlock') { lockCancel(); return true; }
       const open = MODAL_ORDER.find(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
       if (!open) return false;
       if (open === 'modalConfirm') confirmCancel(); else closeModal(open);
@@ -3196,7 +3246,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     function handleBackPress() {
       if (closeTopModal()) return 'modal';
       const dash = document.getElementById('viewDashboard');
-      if (dash && dash.classList.contains('hidden')) { switchTab('viewDashboard'); return 'tab'; }
+      if (!lockUI.mode && dash && dash.classList.contains('hidden')) { switchTab('viewDashboard'); return 'tab'; }
       showToast('Toque em voltar novamente para sair');
       clearTimeout(backExitTimer);
       backExitTimer = setTimeout(pushBackGuard, 2000); // passou o tempo: volta a proteger o app
@@ -3221,6 +3271,261 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       });
     }
 
+    // ===== BLOQUEIO DO APP (PIN / biometria) =====
+    // É um bloqueio de tela: protege contra quem pegar o celular desbloqueado. O PIN fica só neste aparelho (hash com sal).
+    const LOCK_KEY = 'finbud_lock', LOCK_FAIL_KEY = 'finbud_lock_fail';
+    let lockCfg = null, lockHiddenAt = 0, lockTimer = null, lockForgotTimer = null;
+    let lockUI = { mode: null, buf: '', tmp: '', len: 4, cb: null, busy: false };
+
+    function lockLoad() {
+      try { lockCfg = JSON.parse(localStorage.getItem(LOCK_KEY) || 'null'); } catch (e) { lockCfg = null; }
+      if (lockCfg && !lockCfg.hash) lockCfg = null;
+      return lockCfg;
+    }
+    function lockSave() {
+      try { if (lockCfg) localStorage.setItem(LOCK_KEY, JSON.stringify(lockCfg)); else localStorage.removeItem(LOCK_KEY); } catch (e) {}
+    }
+    function b64enc(u8) { let s = ''; u8.forEach(b => { s += String.fromCharCode(b); }); return btoa(s); }
+    function b64dec(str) { const s = atob(str); const u8 = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i); return u8; }
+    function randBytes(n) { const u8 = new Uint8Array(n); if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(u8); else for (let i = 0; i < n; i++) u8[i] = Math.floor(Math.random() * 256); return u8; }
+
+    async function pinHash(pin, saltB64) {
+      try {
+        const sub = window.crypto && window.crypto.subtle;
+        if (sub && typeof TextEncoder !== 'undefined') {
+          const key = await sub.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
+          const bits = await sub.deriveBits({ name: 'PBKDF2', salt: b64dec(saltB64), iterations: 150000, hash: 'SHA-256' }, key, 256);
+          return b64enc(new Uint8Array(bits));
+        }
+      } catch (e) {}
+      let h = 5381; const t = saltB64 + ':' + pin; // alternativa simples para navegadores sem WebCrypto
+      for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+      return 'f' + h;
+    }
+
+    function lockFailState() { try { return JSON.parse(localStorage.getItem(LOCK_FAIL_KEY) || '{}') || {}; } catch (e) { return {}; } }
+    function lockWaitSec() { const f = lockFailState(); return f.until && f.until > Date.now() ? Math.ceil((f.until - Date.now()) / 1000) : 0; }
+    function lockFailAdd() {
+      const f = lockFailState(); const n = (f.n || 0) + 1;
+      const until = n >= 5 ? Date.now() + Math.min(30 * Math.pow(2, n - 5), 900) * 1000 : 0;
+      try { localStorage.setItem(LOCK_FAIL_KEY, JSON.stringify({ n, until })); } catch (e) {}
+    }
+    function lockFailReset() { try { localStorage.removeItem(LOCK_FAIL_KEY); } catch (e) {} }
+
+    function lockShow(mode, cb) {
+      clearTimeout(lockForgotTimer);
+      lockUI = { mode, buf: '', tmp: '', len: (lockCfg && lockCfg.len) || 4, cb: cb || null, busy: false };
+      if (mode === 'new1') lockUI.len = 4;
+      document.documentElement.classList.add('locked');
+      lockRender();
+      if (mode === 'unlock' && lockCfg && lockCfg.bio) setTimeout(bioUnlock, 250);
+    }
+    function lockHide() {
+      lockUI.mode = null; lockUI.buf = ''; lockUI.cb = null;
+      clearInterval(lockTimer);
+      document.documentElement.classList.remove('locked');
+    }
+    function lockCancel() {
+      if (!lockUI.mode || lockUI.mode === 'unlock') return;
+      lockHide(); renderLockSettings();
+    }
+
+    function lockRender() {
+      const m = lockUI.mode; if (!m) return;
+      const T = { unlock: ['Digite seu PIN', 'Desbloqueie o FinBud'], verify: ['Digite o PIN atual', 'Confirme que é você'], new1: ['Crie um PIN', 'Escolha o tamanho e digite'], new2: ['Repita o PIN', 'Digite o mesmo PIN para confirmar'] }[m];
+      document.getElementById('lockTitle').textContent = T[0];
+      document.getElementById('lockSub').textContent = T[1];
+      const dots = document.getElementById('lockDots');
+      dots.className = '';
+      dots.innerHTML = Array.from({ length: lockUI.len }, (_, i) => `<span class="lk-dot${i < lockUI.buf.length ? ' on' : ''}"></span>`).join('');
+      const lenBox = document.getElementById('lockLen');
+      lenBox.style.display = m === 'new1' ? 'flex' : 'none';
+      lenBox.querySelectorAll('button').forEach(b => b.classList.toggle('on', Number(b.dataset.len) === lockUI.len));
+      document.getElementById('lockBio').hidden = !(m === 'unlock' && lockCfg && lockCfg.bio);
+      document.getElementById('lockForgot').style.display = m === 'unlock' ? '' : 'none';
+      document.getElementById('lockForgot').textContent = 'Esqueci o PIN';
+      document.getElementById('lockCancel').style.display = m === 'unlock' ? 'none' : '';
+      lockWaitUpdate();
+    }
+
+    function lockMsg(t) { const el = document.getElementById('lockMsg'); if (el) el.textContent = t || ''; }
+    function lockWaitUpdate() {
+      clearInterval(lockTimer);
+      const tick = () => {
+        const w = lockWaitSec();
+        if (w > 0) lockMsg('Muitas tentativas. Aguarde ' + w + 's');
+        else { clearInterval(lockTimer); if (/Aguarde/.test(document.getElementById('lockMsg').textContent)) lockMsg(''); }
+      };
+      if (lockWaitSec() > 0) { tick(); lockTimer = setInterval(tick, 1000); }
+    }
+    function lockShake(msg) {
+      const dots = document.getElementById('lockDots');
+      dots.classList.remove('err'); void dots.offsetWidth; dots.classList.add('err');
+      lockMsg(msg);
+      if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {}
+    }
+
+    function lockKey(k) {
+      if (!lockUI.mode || lockUI.busy) return;
+      if (k === 'bio') { bioUnlock(); return; }
+      if (lockWaitSec() > 0) { lockWaitUpdate(); return; }
+      lockMsg('');
+      if (k === 'del') lockUI.buf = lockUI.buf.slice(0, -1);
+      else if (/^\d$/.test(k) && lockUI.buf.length < lockUI.len) lockUI.buf += k;
+      lockRender();
+      if (lockUI.buf.length === lockUI.len) lockSubmit();
+    }
+
+    async function lockSubmit() {
+      const m = lockUI.mode, pin = lockUI.buf;
+      lockUI.busy = true;
+      try {
+        if (m === 'unlock' || m === 'verify') {
+          const ok = lockCfg && (await pinHash(pin, lockCfg.salt)) === lockCfg.hash;
+          if (ok) {
+            lockFailReset();
+            const cb = lockUI.cb;
+            if (m === 'unlock') lockHide(); else if (cb) { lockUI.busy = false; cb(); }
+          } else {
+            lockFailAdd();
+            lockUI.buf = ''; lockRender();
+            lockShake(lockWaitSec() > 0 ? '' : 'PIN incorreto');
+            lockWaitUpdate();
+          }
+        } else if (m === 'new1') {
+          lockUI.tmp = pin; lockUI.buf = ''; lockUI.mode = 'new2'; lockRender();
+        } else if (m === 'new2') {
+          if (pin === lockUI.tmp) {
+            const salt = b64enc(randBytes(16));
+            const hash = await pinHash(pin, salt);
+            lockCfg = { salt, hash, len: pin.length, bio: lockCfg && lockCfg.bio || null, after: lockCfg && lockCfg.after != null ? lockCfg.after : 60 };
+            lockSave(); lockFailReset(); lockHide();
+            showToast('PIN ativado. O app vai pedir o PIN ao abrir.', 'success');
+            renderLockSettings();
+          } else {
+            lockUI.tmp = ''; lockUI.buf = ''; lockUI.mode = 'new1'; lockRender();
+            lockShake('Os PINs não conferem. Comece de novo.');
+          }
+        }
+      } finally { lockUI.busy = false; }
+    }
+
+    // --- biometria (WebAuthn, autenticador do próprio aparelho) ---
+    function bioSupported() { return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && navigator.credentials.get && window.isSecureContext); }
+    async function bioAvailable() {
+      try { return bioSupported() && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) { return false; }
+    }
+    async function bioEnable() {
+      if (!lockCfg) return;
+      try {
+        const cred = await navigator.credentials.create({ publicKey: {
+          challenge: randBytes(32),
+          rp: { name: 'FinBud' },
+          user: { id: randBytes(16), name: 'finbud', displayName: 'FinBud' },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+          timeout: 60000
+        } });
+        if (!cred) throw new Error('cancelado');
+        lockCfg.bio = b64enc(new Uint8Array(cred.rawId)); lockSave();
+        showToast('Biometria ativada.', 'success');
+      } catch (e) {
+        showToast('Não foi possível ativar a biometria neste aparelho.', 'error');
+      }
+      renderLockSettings();
+    }
+    function bioDisable() { if (!lockCfg) return; lockCfg.bio = null; lockSave(); showToast('Biometria desativada.'); renderLockSettings(); }
+    async function bioUnlock() {
+      if (lockUI.mode !== 'unlock' || !lockCfg || !lockCfg.bio || lockUI.busy) return;
+      lockUI.busy = true;
+      try {
+        const r = await navigator.credentials.get({ publicKey: {
+          challenge: randBytes(32),
+          allowCredentials: [{ type: 'public-key', id: b64dec(lockCfg.bio), transports: ['internal'] }],
+          userVerification: 'required', timeout: 60000
+        } });
+        if (r) { lockFailReset(); lockHide(); }
+      } catch (e) { /* cancelou ou falhou: continua o PIN */ }
+      lockUI.busy = false;
+    }
+
+    function lockForgot() {
+      const b = document.getElementById('lockForgot');
+      if (b.dataset.armed !== '1') {
+        b.dataset.armed = '1'; b.textContent = 'Toque de novo: isso sai da conta e remove o PIN';
+        clearTimeout(lockForgotTimer);
+        lockForgotTimer = setTimeout(() => { b.dataset.armed = ''; b.textContent = 'Esqueci o PIN'; }, 5000);
+        return;
+      }
+      b.dataset.armed = '';
+      lockCfg = null; lockSave(); lockFailReset(); lockHide();
+      signOut();
+    }
+
+    // --- configurações ---
+    function lockStartSetup() { lockShow('new1'); }
+    function lockChangePin() { lockShow('verify', () => lockShow('new1')); }
+    function lockDisable() {
+      lockShow('verify', () => {
+        lockCfg = null; lockSave(); lockFailReset(); lockHide();
+        showToast('Bloqueio desativado.'); renderLockSettings();
+      });
+    }
+    function lockSetAfter(v) { if (!lockCfg) return; lockCfg.after = Number(v); lockSave(); }
+
+    async function renderLockSettings() {
+      const box = document.getElementById('lockSettings'); if (!box) return;
+      const btn = 'w-full glass-card p-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-700/60';
+      if (!lockCfg) {
+        box.innerHTML = `<p class="text-[11px] text-slate-400">Peça um PIN (e biometria, se o aparelho tiver) toda vez que abrir o app.</p>
+          <button type="button" id="lockEnableBtn" class="${btn}"><i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i> Ativar bloqueio com PIN</button>`;
+        document.getElementById('lockEnableBtn').addEventListener('click', lockStartSetup);
+      } else {
+        const bio = await bioAvailable();
+        const a = lockCfg.after == null ? 60 : lockCfg.after;
+        const opt = (v, t) => `<option value="${v}"${a === v ? ' selected' : ''}>${t}</option>`;
+        box.innerHTML = `<div class="flex items-center gap-2 text-xs font-semibold text-emerald-400"><i data-lucide="shield-check" class="w-4 h-4"></i> Bloqueio ativo (PIN de ${lockCfg.len} dígitos)</div>
+          <label class="block text-[11px] text-slate-400">Pedir o PIN
+            <select id="lockAfter" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700 text-xs text-ink">
+              ${opt(0, 'Sempre que sair do app')}${opt(60, 'Depois de 1 minuto fora')}${opt(300, 'Depois de 5 minutos fora')}${opt(900, 'Depois de 15 minutos fora')}
+            </select></label>
+          ${bio
+            ? `<button type="button" id="lockBioBtn" class="${btn}"><i data-lucide="fingerprint" class="w-4 h-4 text-teal-400"></i> ${lockCfg.bio ? 'Desativar biometria' : 'Ativar biometria'}</button>`
+            : '<p class="text-[11px] text-slate-500">Biometria indisponível neste aparelho ou navegador.</p>'}
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="lockChangeBtn" class="${btn}">Trocar PIN</button>
+            <button type="button" id="lockOffBtn" class="${btn} !text-red-300">Desativar</button>
+          </div>`;
+        document.getElementById('lockAfter').addEventListener('change', e => lockSetAfter(e.target.value));
+        const bb = document.getElementById('lockBioBtn'); if (bb) bb.addEventListener('click', () => (lockCfg.bio ? bioDisable() : bioEnable()));
+        document.getElementById('lockChangeBtn').addEventListener('click', lockChangePin);
+        document.getElementById('lockOffBtn').addEventListener('click', lockDisable);
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function setupLock() {
+      lockLoad();
+      document.querySelectorAll('#lockPad button').forEach(b => b.addEventListener('click', () => lockKey(b.dataset.k)));
+      document.querySelectorAll('#lockLen button').forEach(b => b.addEventListener('click', () => { lockUI.len = Number(b.dataset.len); lockUI.buf = ''; lockRender(); }));
+      document.getElementById('lockForgot').addEventListener('click', lockForgot);
+      document.getElementById('lockCancel').addEventListener('click', lockCancel);
+      document.addEventListener('keydown', e => {
+        if (!lockUI.mode) return;
+        if (/^\d$/.test(e.key)) { e.preventDefault(); lockKey(e.key); }
+        else if (e.key === 'Backspace') { e.preventDefault(); lockKey('del'); }
+      }, true);
+      document.addEventListener('visibilitychange', () => {
+        if (!lockCfg) return;
+        if (document.hidden) { if (!lockUI.mode) lockHiddenAt = Date.now(); return; }
+        if (!lockHiddenAt) return;
+        const away = (Date.now() - lockHiddenAt) / 1000; lockHiddenAt = 0;
+        const after = lockCfg.after == null ? 60 : lockCfg.after;
+        if (!lockUI.mode && away >= after) lockShow('unlock');
+      });
+      if (lockCfg) lockShow('unlock'); else document.documentElement.classList.remove('locked');
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       applyTheme();
       updateThemeUI();
@@ -3230,6 +3535,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       } catch (e) {}
       setupGlobalHandlers();
       setupLogin();
+      setupLock();
       startApp();
     });
   </script>

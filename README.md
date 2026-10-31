@@ -23,6 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
+- **Bloqueio do app**: PIN de 4 ou 6 dígitos e biometria (digital/rosto) ao abrir; escolha em Configurações → Segurança quando pedir de novo.
 - **Botão voltar do Android**: fecha a janela aberta, volta para a tela inicial e, na tela inicial, precisa de 2 toques seguidos para sair.
 - **Relatórios** (ícone de gráfico no cabeçalho): comparação mês com mês, receitas x despesas de 6 meses, categorias, maiores gastos e evolução do saldo (por dia ou 6 meses).
 - **Avisos no topo**: fatura vencendo em até 7 dias (ou vencida) e categoria a partir de 90% do limite; toque para abrir, X para dispensar.
