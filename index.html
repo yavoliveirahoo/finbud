@@ -1845,10 +1845,12 @@
       // Group expenses by category
       const expenseMap = {};
       state.transactions
-        .filter(t => t.paid !== false && t.type === 'expense' && (t.date || '').startsWith(todayStr().slice(0, 7)))
+        .filter(t => countsInMonth(t, budgetMonth))
         .forEach(t => {
           expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
         });
+      const chartLbl = document.getElementById('chartMonthLabel');
+      if (chartLbl) chartLbl.innerText = budgetMonth === todayStr().slice(0, 7) ? 'Mês Atual' : monthLabel(+budgetMonth.slice(0, 4), +budgetMonth.slice(5, 7) - 1).replace(' de ', ' ');
 
       const labels = Object.keys(expenseMap);
       const data = Object.values(expenseMap);
@@ -2301,14 +2303,15 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     }
 
     // gasto da categoria no mês: despesas comuns pagas pela data; compras no cartão pelo mês da FATURA (pagas ou não)
+    function countsInMonth(t, ym) {
+      if (t.type !== 'expense' || !t.date) return false;
+      const card = cardOfTx(t);
+      return card ? faturaOf(t.date, card) === ym : (t.paid !== false && t.date.startsWith(ym));
+    }
     function spentThisMonth(catName, ym) {
       ym = ym || budgetMonth;
       return state.transactions
-        .filter(t => {
-          if (t.type !== 'expense' || t.category !== catName || !t.date) return false;
-          const card = cardOfTx(t);
-          return card ? faturaOf(t.date, card) === ym : (t.paid !== false && t.date.startsWith(ym));
-        })
+        .filter(t => t.category === catName && countsInMonth(t, ym))
         .reduce((sum, t) => sum + t.amount, 0);
     }
 
