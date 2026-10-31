@@ -23,6 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
+- **Relatórios** (ícone de gráfico no cabeçalho): comparação mês com mês, receitas x despesas de 6 meses, categorias, maiores gastos e evolução do saldo (por dia ou 6 meses).
 - **Avisos no topo**: fatura vencendo em até 7 dias (ou vencida) e categoria a partir de 90% do limite; toque para abrir, X para dispensar.
 - **Mês único**: o seletor do calendário comanda a tela inicial: resumo (receitas, despesas e previsto), gráfico e limites de orçamento mudam juntos. Compras no cartão contam no mês da fatura (pagas ou não).
 - **Extrato**: filtro por cartão de crédito (um cartão, todos ou sem cartão) combinável com categoria, mês e busca; abre no mês atual e mostra tudo do mês, pago ou não, inclusive as recorrências agendadas/atrasadas (com botão para marcar como pago); ordenado por data (mais recente primeiro), com busca, filtros por mês, categoria e tipo (receitas, despesas, pendentes) e totais de recebido, pago e saldo do que está filtrado.

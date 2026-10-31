@@ -217,6 +217,9 @@
     </div>
     
     <div class="flex items-center gap-2">
+      <button onclick="openReports()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 transition active:scale-95 border border-slate-700/50" aria-label="Relatórios" title="Relatórios">
+        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+      </button>
       <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 transition active:scale-95 border border-slate-700/50" aria-label="Alternar tema claro/escuro" title="Alternar tema">
         <i data-lucide="sun" class="theme-sun w-5 h-5"></i><i data-lucide="moon" class="theme-moon w-5 h-5"></i>
       </button>
@@ -448,6 +451,55 @@
       </form>
 
       <div id="cardsList" class="space-y-3"></div>
+    </section>
+
+    <!-- VIEW: RELATÓRIOS -->
+    <section id="viewReports" class="space-y-4 hidden">
+      <div class="flex items-center justify-between">
+        <button onclick="switchTab('viewDashboard')" class="flex items-center gap-1 text-xs font-semibold text-slate-300 px-2.5 py-2 -ml-2 rounded-lg active:scale-95"><i data-lucide="chevron-left" class="w-4 h-4"></i> Voltar</button>
+        <h2 class="text-base font-bold text-ink">Relatórios</h2>
+        <span class="w-16"></span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div><label for="repMonthA" class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1 block">Mês</label>
+          <select id="repMonthA" onchange="renderReports()" class="glass-card w-full text-xs text-slate-200 rounded-xl px-3 py-2.5 outline-none border border-slate-800 focus:border-emerald-500"></select></div>
+        <div><label for="repMonthB" class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1 block">Comparar com</label>
+          <select id="repMonthB" onchange="renderReports()" class="glass-card w-full text-xs text-slate-200 rounded-xl px-3 py-2.5 outline-none border border-slate-800 focus:border-emerald-500"></select></div>
+      </div>
+
+      <div class="glass-card rounded-3xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2"><i data-lucide="git-compare" class="w-4 h-4 text-teal-400"></i> Mês com mês</h3>
+        <div id="repCompare" class="space-y-2"></div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">Receitas pagas pela data; despesas pelo mês em que contam no orçamento (compras no cartão, no mês da fatura).</p>
+      </div>
+
+      <div class="glass-card rounded-3xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-teal-400"></i> Receitas x despesas (6 meses)</h3>
+        <div class="relative h-52 w-full"><canvas id="repBarChart"></canvas></div>
+      </div>
+
+      <div class="glass-card rounded-3xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-teal-400"></i> Categorias: mês x comparação</h3>
+        <div id="repCats" class="space-y-3"></div>
+      </div>
+
+      <div class="glass-card rounded-3xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2"><i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-400"></i> Maiores gastos do mês</h3>
+        <div id="repTop" class="space-y-2"></div>
+      </div>
+
+      <div class="glass-card rounded-3xl p-4 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-teal-400"></i> Evolução do saldo</h3>
+          <div class="flex gap-1" role="group" aria-label="Período">
+            <button type="button" id="repModeDays" onclick="setRepMode('days')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition">Dias</button>
+            <button type="button" id="repModeMonths" onclick="setRepMode('months')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition">6 meses</button>
+          </div>
+        </div>
+        <div class="relative h-52 w-full"><canvas id="repLineChart"></canvas></div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">Mesmo cálculo do calendário: inclui o que ainda está previsto (pendentes, recorrências e faturas no vencimento).</p>
+      </div>
     </section>
   </main>
 
@@ -1057,7 +1109,7 @@
 
     // NAVIGATION
     function switchTab(viewId) {
-      ['viewDashboard', 'viewRecurring', 'viewTransactions', 'viewCards'].forEach(id => {
+      ['viewDashboard', 'viewRecurring', 'viewTransactions', 'viewCards', 'viewReports'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
       document.getElementById(viewId).classList.remove('hidden');
@@ -1080,6 +1132,8 @@
       });
 
       if (viewId === 'viewDashboard') renderChart();
+      if (viewId === 'viewReports') renderReports();
+      window.scrollTo(0, 0);
     }
 
     // TEMA (claro / escuro / automático)
@@ -2312,6 +2366,163 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
         .reduce((sum, t) => sum + t.amount, 0);
     }
 
+
+    // ===== RELATÓRIOS =====
+    let repMode = 'days';
+    let repBarInst = null, repLineInst = null;
+
+    function shiftMonthStr(ym, delta) {
+      let y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1 + delta;
+      while (m < 0) { m += 12; y--; }
+      while (m > 11) { m -= 12; y++; }
+      return `${y}-${pad2(m + 1)}`;
+    }
+    const ymLabel = ym => monthLabel(+ym.slice(0, 4), +ym.slice(5, 7) - 1).replace(' de ', ' ');
+
+    // números do mês: receitas pagas pela data; despesas pela regra do orçamento (cartão = mês da fatura)
+    function monthStats(ym) {
+      const st = { income: 0, expense: 0, byCat: {}, items: [] };
+      state.transactions.forEach(t => {
+        if (!t.date) return;
+        if (t.type === 'income') { if (t.paid !== false && t.date.startsWith(ym)) st.income += t.amount; return; }
+        if (!countsInMonth(t, ym)) return;
+        st.expense += t.amount;
+        st.byCat[t.category] = (st.byCat[t.category] || 0) + t.amount;
+        st.items.push(t);
+      });
+      st.net = st.income - st.expense;
+      return st;
+    }
+
+    function deltaHtml(a, b, goodWhenUp) {
+      if (!a && !b) return '<span class="text-slate-500">—</span>';
+      if (!b) return '<span class="text-sky-300">novo</span>';
+      const p = ((a - b) / Math.abs(b)) * 100;
+      if (Math.abs(p) < 0.5) return '<span class="text-slate-400">= igual</span>';
+      const up = p > 0, good = up === goodWhenUp;
+      return `<span class="${good ? 'text-emerald-400' : 'text-rose-400'}">${up ? '▲' : '▼'} ${Math.abs(Math.round(p))}%</span>`;
+    }
+
+    function openReports() {
+      const sel = selMonth();
+      document.getElementById('repMonthA').dataset.pick = sel;
+      document.getElementById('repMonthB').dataset.pick = shiftMonthStr(sel, -1);
+      switchTab('viewReports');
+    }
+
+    function setRepMode(m) { repMode = m; renderReports(); }
+
+    function populateReportSelectors() {
+      const A = document.getElementById('repMonthA'), B = document.getElementById('repMonthB');
+      const prevA = A.dataset.pick || A.value || selMonth();
+      const prevB = B.dataset.pick || B.value || shiftMonthStr(prevA, -1);
+      A.dataset.pick = ''; B.dataset.pick = '';
+      const set = new Set([todayStr().slice(0, 7), selMonth(), prevA, prevB]);
+      state.transactions.forEach(t => { if (t.date) { set.add(t.date.slice(0, 7)); const c = cardOfTx(t); if (c) set.add(faturaOf(t.date, c)); } });
+      const months = [...set].filter(Boolean).sort().reverse();
+      const opts = months.map(m => `<option value="${m}">${ymLabel(m)}</option>`).join('');
+      A.innerHTML = opts; B.innerHTML = opts;
+      A.value = prevA; B.value = prevB;
+    }
+
+    function renderReports() {
+      if (!document.getElementById('repMonthA')) return;
+      populateReportSelectors();
+      const a = document.getElementById('repMonthA').value, b = document.getElementById('repMonthB').value;
+      const A = monthStats(a), B = monthStats(b);
+      const light = document.documentElement.classList.contains('light');
+
+      // --- comparativo
+      const row = (label, va, vb, goodUp, cls) => `
+        <div class="rounded-2xl bg-slate-900/50 border border-slate-800 p-3">
+          <div class="flex items-center justify-between"><span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">${label}</span><span class="text-xs font-bold">${deltaHtml(va, vb, goodUp)}</span></div>
+          <div class="flex items-baseline justify-between mt-1 gap-2">
+            <span class="text-sm font-extrabold ${cls}">${formatCurrency(va)}</span>
+            <span class="text-[11px] text-slate-400">${ymLabel(b)}: <b class="text-slate-300">${formatCurrency(vb)}</b></span>
+          </div>
+        </div>`;
+      document.getElementById('repCompare').innerHTML =
+        `<p class="text-[11px] text-slate-400"><b class="text-slate-200">${ymLabel(a)}</b> comparado com <b class="text-slate-200">${ymLabel(b)}</b></p>` +
+        row('Receitas', A.income, B.income, true, 'text-emerald-400') +
+        row('Despesas', A.expense, B.expense, false, 'text-rose-400') +
+        row('Resultado do mês', A.net, B.net, true, A.net < 0 ? 'text-rose-400' : 'text-ink');
+
+      // --- categorias
+      const cats = [...new Set([...Object.keys(A.byCat), ...Object.keys(B.byCat)])]
+        .sort((x, y) => (A.byCat[y] || 0) - (A.byCat[x] || 0) || (B.byCat[y] || 0) - (B.byCat[x] || 0));
+      const shownCats = cats.slice(0, 8);
+      document.getElementById('repCats').innerHTML = cats.length ? shownCats.map(name => {
+        const va = A.byCat[name] || 0, vb = B.byCat[name] || 0;
+        const pct = A.expense ? Math.round((va / A.expense) * 100) : 0;
+        const cat = state.categories.find(c => c.name === name);
+        return `<div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-200 truncate flex items-center gap-1.5">${iconHtml(cat ? cat.icon : 'tag', 'w-3.5 h-3.5')} ${esc(name)}</span>
+              <span class="text-xs font-bold text-slate-100 flex-shrink-0">${formatCurrency(va)}</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden mt-1.5"><div class="h-full rounded-full bg-emerald-500" style="width:${pct}%"></div></div>
+            <div class="flex items-center justify-between mt-1 text-[11px] text-slate-400"><span>${pct}% das despesas · ${ymLabel(b)}: ${formatCurrency(vb)}</span><span class="font-bold">${deltaHtml(va, vb, false)}</span></div>
+          </div>`;
+      }).join('') + (cats.length > 8 ? `<p class="text-[11px] text-slate-500 text-center">e mais ${cats.length - 8} categorias</p>` : '')
+        : '<p class="text-xs text-slate-500 text-center py-4">Sem despesas nesses meses.</p>';
+
+      // --- maiores gastos
+      const top = [...A.items].sort((x, y) => y.amount - x.amount).slice(0, 10);
+      document.getElementById('repTop').innerHTML = top.length ? top.map((t, i) => {
+        const card = cardOfTx(t);
+        return `<div class="flex items-center gap-3 rounded-2xl bg-slate-900/50 border border-slate-800 px-3 py-2.5">
+            <span class="w-6 text-center text-xs font-extrabold text-slate-500">${i + 1}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-slate-100 truncate">${t.emoji ? `<span class="emo" aria-hidden="true">${esc(t.emoji)}</span> ` : ''}${esc(t.description)}</p>
+              <p class="text-[11px] text-slate-400 truncate">${esc(t.category)} · ${formatDate(t.date)}${card ? ` · <span class="emo">💳</span> ${esc(card.name)}` : ''}</p>
+            </div>
+            <span class="text-xs font-extrabold text-rose-400 flex-shrink-0">${formatCurrency(t.amount)}</span>
+          </div>`;
+      }).join('') : '<p class="text-xs text-slate-500 text-center py-4">Sem despesas neste mês.</p>';
+
+      // --- gráficos
+      const tick = cssVar('--legend', '#94a3b8');
+      const grid = light ? 'rgba(15,23,42,.08)' : 'rgba(255,255,255,.07)';
+      const font = { size: 11, family: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" };
+      const months6 = [5, 4, 3, 2, 1, 0].map(k => shiftMonthStr(a, -k));
+
+      document.getElementById('repModeDays').className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold border transition ' + (repMode === 'days' ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'text-slate-300 border-slate-700');
+      document.getElementById('repModeMonths').className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold border transition ' + (repMode === 'months' ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'text-slate-300 border-slate-700');
+
+      if (typeof Chart === 'undefined') return;
+      if (repBarInst) repBarInst.destroy();
+      const stats6 = months6.map(monthStats);
+      repBarInst = new Chart(document.getElementById('repBarChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: months6.map(m => ymLabel(m).split(' ')[0].slice(0, 3) + '/' + m.slice(2, 4)),
+          datasets: [
+            { label: 'Receitas', data: stats6.map(x => x.income), backgroundColor: '#10b981', borderRadius: 4 },
+            { label: 'Despesas', data: stats6.map(x => x.expense), backgroundColor: '#f43f5e', borderRadius: 4 }
+          ] },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: tick, font, boxWidth: 10 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${formatCurrency(c.parsed.y)}` } } },
+          scales: { x: { ticks: { color: tick, font }, grid: { display: false } }, y: { ticks: { color: tick, font, callback: v => compactMoney(v) }, grid: { color: grid } } } }
+      });
+
+      if (repLineInst) repLineInst.destroy();
+      let labels, data;
+      if (repMode === 'days') {
+        const md = buildMonthData(+a.slice(0, 4), +a.slice(5, 7) - 1);
+        labels = Array.from({ length: md.dim }, (_, i) => String(i + 1));
+        data = labels.map((_, i) => md.info[i + 1].balance);
+      } else {
+        labels = months6.map(m => ymLabel(m).split(' ')[0].slice(0, 3) + '/' + m.slice(2, 4));
+        data = months6.map(m => { const md = buildMonthData(+m.slice(0, 4), +m.slice(5, 7) - 1); return md.info[md.dim].balance; });
+      }
+      repLineInst = new Chart(document.getElementById('repLineChart').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Saldo', data, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.15)', fill: true, tension: .25, pointRadius: repMode === 'days' ? 0 : 3, pointHoverRadius: 5, borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { title: it => (repMode === 'days' ? `Dia ${it[0].label}` : it[0].label), label: c => `Saldo: ${formatCurrency(c.parsed.y)}` } } },
+          scales: { x: { ticks: { color: tick, font, maxTicksLimit: 8 }, grid: { display: false } }, y: { ticks: { color: tick, font, callback: v => compactMoney(v) }, grid: { color: grid } } } }
+      });
+    }
+
     // ===== AVISOS: faturas perto de vencer e categorias perto do limite =====
     const ALERT_DAYS = 7;        // avisa faturas que vencem nos próximos 7 dias (ou já vencidas)
     const ALERT_BUDGET_PCT = 90; // avisa categoria a partir de 90% do limite
@@ -2949,6 +3160,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       renderTransactions();
       renderCards();
       if (!document.getElementById('viewDashboard').classList.contains('hidden')) renderChart();
+      if (!document.getElementById('viewReports').classList.contains('hidden')) renderReports();
       refreshIcons();
     }
 
