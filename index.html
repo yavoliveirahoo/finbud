@@ -2825,14 +2825,17 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
 
     function removeCard(id) {
       const c = (state.cards || []).find(x => x.id === id); if (!c) return;
-      const n = state.transactions.filter(t => t.cardId === id).length;
-      askConfirm({
-        title: 'Remover cartão',
-        text: n
-          ? `Remover "${c.name}"? As ${n} compra${n > 1 ? 's' : ''} dele continuam no app como despesas comuns, sem cartão, nas mesmas datas.`
-          : `Remover "${c.name}"?`,
-        okLabel: 'Remover'
-      }, () => {
+      const mine = state.transactions.filter(t => t.cardId === id);
+      const unpaid = mine.filter(t => t.paid === false);
+      const kept = mine.length - unpaid.length;
+      let text = `Remover "${c.name}"?`;
+      if (unpaid.length) {
+        const total = unpaid.reduce((s, t) => s + t.amount, 0);
+        text += ` ATENÇÃO: as ${unpaid.length} compra${unpaid.length > 1 ? 's' : ''} ainda não paga${unpaid.length > 1 ? 's' : ''} deste cartão (${formatCurrency(total)}) serão APAGADAS junto.`;
+      }
+      if (kept) text += ` ${kept} compra${kept > 1 ? 's' : ''} já paga${kept > 1 ? 's' : ''} ${kept > 1 ? 'ficam' : 'fica'} como despesa${kept > 1 ? 's' : ''} comum${kept > 1 ? 'ns' : ''}, sem cartão.`;
+      askConfirm({ title: 'Remover cartão', text, okLabel: unpaid.length ? 'Remover e apagar compras' : 'Remover' }, () => {
+        state.transactions = state.transactions.filter(t => !(t.cardId === id && t.paid === false));
         state.transactions.forEach(t => { if (t.cardId === id) delete t.cardId; });
         state.cards = (state.cards || []).filter(x => x.id !== id);
         if (editingCardId === id) resetCardForm();
