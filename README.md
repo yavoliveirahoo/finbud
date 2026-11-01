@@ -23,6 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
+- **Gráfico por categoria**: lista abaixo do gráfico com valor e percentual de cada categoria no mês, mais o total.
 - **Cartões**: botões Editar e Remover em cada cartão (remover apaga as compras não pagas, com aviso antes; as pagas ficam como despesas comuns).
 - **Fatura do cartão**: a compra entra na fatura do mês em que ela vence (fecha dia 15, vence dia 4: compra de 14/out vai para novembro).
 - **Bloqueio do app**: PIN de 4 ou 6 dígitos e biometria (digital/rosto) ao abrir; escolha em Configurações → Segurança quando pedir de novo.
