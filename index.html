@@ -489,7 +489,8 @@
         <input type="text" id="cardName" required maxlength="40" placeholder="Nome (ex.: Walmart World)" class="col-span-2 bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
         <input type="number" id="cardClosing" required min="1" max="31" placeholder="Dia do fechamento" class="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
         <input type="number" id="cardDue" required min="1" max="31" placeholder="Dia do vencimento" class="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:border-emerald-500">
-        <button type="submit" class="col-span-2 py-2.5 bg-emerald-500 font-bold text-slate-950 rounded-xl text-sm">Adicionar cartão</button>
+        <button type="submit" id="cardSubmit" class="col-span-2 py-2.5 bg-emerald-500 font-bold text-slate-950 rounded-xl text-sm">Adicionar cartão</button>
+        <button type="button" id="cardCancel" onclick="cancelEditCard()" class="hidden col-span-2 py-2 text-xs font-semibold text-slate-400 underline">Cancelar edição</button>
       </form>
 
       <div id="cardsList" class="space-y-3"></div>
@@ -2786,15 +2787,58 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       else { paid.disabled = false; }
     }
 
+    let editingCardId = null;
     function handleSaveCard(e) {
       e.preventDefault();
       const name = document.getElementById('cardName').value.trim();
       const closingDay = parseInt(document.getElementById('cardClosing').value, 10);
       const dueDay = parseInt(document.getElementById('cardDue').value, 10);
       if (!name || !(closingDay >= 1 && closingDay <= 31) || !(dueDay >= 1 && dueDay <= 31)) return;
-      state.cards = [...(state.cards || []), { id: 'card-' + Date.now(), name, closingDay, dueDay }];
-      document.getElementById('formCard').reset();
+      const cur = editingCardId && (state.cards || []).find(c => c.id === editingCardId);
+      if (cur) { cur.name = name; cur.closingDay = closingDay; cur.dueDay = dueDay; }
+      else state.cards = [...(state.cards || []), { id: 'card-' + Date.now(), name, closingDay, dueDay }];
+      resetCardForm();
       saveState();
+      if (cur) showToast('Cartão atualizado.', 'success');
+    }
+
+    function resetCardForm() {
+      editingCardId = null;
+      document.getElementById('formCard').reset();
+      document.getElementById('cardSubmit').textContent = 'Adicionar cartão';
+      document.getElementById('cardCancel').classList.add('hidden');
+    }
+    function cancelEditCard() { resetCardForm(); }
+
+    function startEditCard(id) {
+      const c = (state.cards || []).find(x => x.id === id); if (!c) return;
+      editingCardId = id;
+      document.getElementById('cardName').value = c.name;
+      document.getElementById('cardClosing').value = c.closingDay;
+      document.getElementById('cardDue').value = c.dueDay;
+      document.getElementById('cardSubmit').textContent = 'Salvar alterações';
+      document.getElementById('cardCancel').classList.remove('hidden');
+      const f = document.getElementById('formCard');
+      if (f.scrollIntoView) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('cardName').focus({ preventScroll: true });
+    }
+
+    function removeCard(id) {
+      const c = (state.cards || []).find(x => x.id === id); if (!c) return;
+      const n = state.transactions.filter(t => t.cardId === id).length;
+      askConfirm({
+        title: 'Remover cartão',
+        text: n
+          ? `Remover "${c.name}"? As ${n} compra${n > 1 ? 's' : ''} dele continuam no app como despesas comuns, sem cartão, nas mesmas datas.`
+          : `Remover "${c.name}"?`,
+        okLabel: 'Remover'
+      }, () => {
+        state.transactions.forEach(t => { if (t.cardId === id) delete t.cardId; });
+        state.cards = (state.cards || []).filter(x => x.id !== id);
+        if (editingCardId === id) resetCardForm();
+        saveState();
+        showToast('Cartão removido.');
+      });
     }
 
     function setFaturaPaid(cardId, month, paid) {
@@ -2840,6 +2884,10 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
             <div class="flex justify-between items-baseline gap-2">
               <h3 class="font-bold text-white text-sm">${esc(card.name)}</h3>
               <span class="text-[11px] text-slate-400">fecha dia ${card.closingDay} · vence dia ${card.dueDay}</span>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button type="button" onclick="startEditCard('${esc(card.id)}')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-200 border border-slate-700">Editar</button>
+              <button type="button" onclick="removeCard('${esc(card.id)}')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Remover</button>
             </div>
             <div class="mt-2">${rows}</div>
             <div class="flex justify-between mt-2 text-sm font-bold">
