@@ -2759,9 +2759,12 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
 
     // CARTÕES
     // Fatura da compra: até o dia de fechamento vai para o mês atual; depois, para o seguinte.
+    // A fatura é identificada pelo mês em que VENCE (ex.: fecha dia 15, vence dia 4 → compra de 14/out cai na fatura de novembro)
     function faturaOf(dateStr, card) {
       const d = new Date((dateStr || todayStr()) + 'T12:00:00');
-      if (d.getDate() > Number(card.closingDay)) { d.setDate(1); d.setMonth(d.getMonth() + 1); }
+      d.setDate(1);
+      if (new Date((dateStr || todayStr()) + 'T12:00:00').getDate() > Number(card.closingDay)) d.setMonth(d.getMonth() + 1); // já fechou: vai para o próximo fechamento
+      if (Number(card.dueDay) <= Number(card.closingDay)) d.setMonth(d.getMonth() + 1); // vence no mês seguinte ao fechamento
       return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
     }
 
@@ -2883,8 +2886,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     // itens de cada dia + saldo acumulado
     // vencimento da fatura: se o dia de vencimento é <= fechamento, vence no mês seguinte ao fechamento
     function faturaDueDate(card, fm) {
-      let y = +fm.slice(0, 4), mo = +fm.slice(5, 7) - 1;
-      if (Number(card.dueDay) <= Number(card.closingDay)) { mo++; if (mo > 11) { mo = 0; y++; } }
+      const y = +fm.slice(0, 4), mo = +fm.slice(5, 7) - 1;
       const dim = new Date(y, mo + 1, 0).getDate();
       return `${y}-${pad2(mo + 1)}-${pad2(Math.min(Number(card.dueDay), dim))}`;
     }

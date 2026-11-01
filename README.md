@@ -23,6 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
+- **Fatura do cartão**: a compra entra na fatura do mês em que ela vence (fecha dia 15, vence dia 4: compra de 14/out vai para novembro).
 - **Bloqueio do app**: PIN de 4 ou 6 dígitos e biometria (digital/rosto) ao abrir; escolha em Configurações → Segurança quando pedir de novo.
 - **Botão voltar do Android**: fecha a janela aberta, volta para a tela inicial e, na tela inicial, precisa de 2 toques seguidos para sair.
 - **Relatórios** (ícone de gráfico no cabeçalho): comparação mês com mês, receitas x despesas de 6 meses, categorias, maiores gastos e evolução do saldo (por dia ou 6 meses).
