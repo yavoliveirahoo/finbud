@@ -23,6 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
+- **Segurança**: sem scripts de terceiros (gráfico, ícones, Supabase e CSS ficam no próprio app, pasta `vendor/` e `tailwind.css`), política de segurança de conteúdo, dados do Supabase nunca vão para o cache offline e backups/dados importados são validados.
 - **Gráfico por categoria**: lista abaixo do gráfico com valor e percentual de cada categoria no mês, mais o total.
 - **Cartões**: botões Editar e Remover em cada cartão (remover apaga as compras não pagas, com aviso antes; as pagas ficam como despesas comuns).
 - **Fatura do cartão**: a compra entra na fatura do mês em que ela vence (fecha dia 15, vence dia 4: compra de 14/out vai para novembro).
@@ -59,3 +60,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
 3. O ícone do FinBud aparece na tela inicial e o app abre em tela cheia.
 
 Arquivos necessários no repositório: `index.html`, `manifest.webmanifest`, `sw.js` e a pasta `icons/`.
+
+
+## Desenvolvimento
+Se mudar classes do Tailwind no `index.html`, rode `sh tools/build-css.sh` para regenerar o `tailwind.css` (precisa de Node).

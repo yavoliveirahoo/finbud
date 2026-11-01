@@ -24,22 +24,10 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" href="icons/favicon-64.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { theme: { extend: { colors: {
-      ink: 'rgb(var(--ink) / <alpha-value>)',
-      slate: {
-        100: 'rgb(var(--s100) / <alpha-value>)', 200: 'rgb(var(--s200) / <alpha-value>)',
-        300: 'rgb(var(--s300) / <alpha-value>)', 400: 'rgb(var(--s400) / <alpha-value>)',
-        500: 'rgb(var(--s500) / <alpha-value>)', 600: 'rgb(var(--s600) / <alpha-value>)',
-        700: 'rgb(var(--s700) / <alpha-value>)', 800: 'rgb(var(--s800) / <alpha-value>)',
-        900: 'rgb(var(--s900) / <alpha-value>)'
-      }
-    } } } };
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/lucide.min.js"></script>
+  <script src="vendor/supabase.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
@@ -175,6 +163,7 @@
     #lockGate .lk-foot button { background: none; border: none; font-size: 13px; color: rgb(var(--s400)); text-decoration: underline; }
     @keyframes lkShake { 0%,100% { transform: none; } 20% { transform: translateX(-9px); } 40% { transform: translateX(9px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
   </style>
+  <link rel="stylesheet" href="tailwind.css">
 </head>
 <body class="min-h-screen flex flex-col pb-24 selection:bg-emerald-500 selection:text-white">
   <div id="lockGate" role="dialog" aria-modal="true" aria-label="Bloqueio do app">
@@ -1021,13 +1010,61 @@
     const IS_RECOVERY = window.location.hash.includes('type=recovery');
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Limpa os dados (do Supabase ou de um backup importado): os ids vão parar em botões da tela,
+    // então só aceitamos letras, números, "-" e "_". Registros quebrados são descartados.
+    const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+    const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    const newSafeId = pre => pre + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const safeStr = (v, n) => String(v == null ? '' : v).slice(0, n || 200);
+    const safeNum = v => (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '')) && isFinite(Number(v)) ? Number(v) : null;
+    const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
+
+    function sanitizeState(parsed) {
+      const seen = new Set();
+      const uniqId = (id, pre) => { let v = typeof id === 'string' && SAFE_ID.test(id) ? id : newSafeId(pre); while (seen.has(v)) v = newSafeId(pre); seen.add(v); return v; };
+      const arr = a => (Array.isArray(a) ? a.filter(isObj) : []);
+
+      const cardMap = {};
+      const cards = [];
+      arr(parsed.cards).forEach(c => {
+        const closingDay = parseInt(c.closingDay, 10), dueDay = parseInt(c.dueDay, 10);
+        if (!(closingDay >= 1 && closingDay <= 31) || !(dueDay >= 1 && dueDay <= 31)) return;
+        const id = uniqId(c.id, 'card');
+        cardMap[c.id] = id;
+        cards.push({ ...c, id, name: safeStr(c.name, 40), closingDay, dueDay });
+      });
+
+      const categories = arr(parsed.categories).map(c => ({
+        ...c, id: uniqId(c.id, 'cat'), name: safeStr(c.name, 60), type: c.type === 'income' ? 'income' : 'expense',
+        icon: safeStr(c.icon, 40), budget: safeNum(c.budget) || 0
+      })).filter(c => c.name);
+
+      const recurring = [];
+      arr(parsed.recurring).forEach(r => {
+        const amount = safeNum(r.amount);
+        if (amount === null || !DATE_RE.test(String(r.startDate))) return;
+        recurring.push({ ...r, id: uniqId(r.id, 'rec'), description: safeStr(r.description), amount,
+          type: r.type === 'income' ? 'income' : 'expense', category: safeStr(r.category, 60),
+          periodicity: ['daily', 'weekly', 'fortnightly', 'monthly', 'yearly'].includes(r.periodicity) ? r.periodicity : 'monthly',
+          emoji: safeStr(r.emoji, 16), startDate: String(r.startDate), active: r.active !== false });
+      });
+
+      const transactions = [];
+      arr(parsed.transactions).forEach(t => {
+        const amount = safeNum(t.amount);
+        if (amount === null || !DATE_RE.test(String(t.date))) return;
+        const o = { ...t, id: uniqId(t.id, 'tx'), description: safeStr(t.description), amount,
+          type: t.type === 'income' ? 'income' : 'expense', category: safeStr(t.category, 60),
+          emoji: safeStr(t.emoji, 16), date: String(t.date) };
+        if (t.cardId != null) { if (cardMap[t.cardId]) o.cardId = cardMap[t.cardId]; else delete o.cardId; }
+        transactions.push(o);
+      });
+
+      return { transactions, recurring, categories: categories.length ? categories : [...DEFAULT_CATEGORIES], cards };
+    }
+
     function normalizeState(parsed) {
-      return {
-        transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
-        recurring: Array.isArray(parsed.recurring) ? parsed.recurring : [],
-        categories: Array.isArray(parsed.categories) ? parsed.categories : [...DEFAULT_CATEGORIES],
-        cards: Array.isArray(parsed.cards) ? parsed.cards : []
-      };
+      return sanitizeState(isObj(parsed) ? parsed : {});
     }
 
     async function loadState() {
@@ -2316,12 +2353,7 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
         try {
           const imported = JSON.parse(e.target.result);
           if (Array.isArray(imported.transactions) && Array.isArray(imported.categories)) {
-            state = {
-              transactions: imported.transactions,
-              recurring: Array.isArray(imported.recurring) ? imported.recurring : [],
-              categories: imported.categories,
-              cards: Array.isArray(imported.cards) ? imported.cards : []
-            };
+            state = normalizeState(imported);
             saveState();
             closeModal('modalSettings');
             showToast('Backup restaurado com sucesso.');
