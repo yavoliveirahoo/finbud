@@ -1,4 +1,4 @@
-const CACHE = 'finbud-v28';
+const CACHE = 'finbud-v29';
 const ASSETS = ['./', './index.html', './tailwind.css', './manifest.webmanifest', './vendor/chart.umd.min.js', './vendor/lucide.min.js', './vendor/supabase.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 // Só estes endereços podem ir para o cache. Dados do Supabase (saldo, compras, sessão) NUNCA são guardados.

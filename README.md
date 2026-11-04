@@ -23,6 +23,7 @@ Aplicativo web completo e responsivo de Controle Financeiro Pessoal, otimizado p
   - Botão de **editar** e remoção individual de lançamentos.
   - Lançamentos vindos de recorrências mostram a periodicidade.
 
+- **Faturas dos cartões**: cada cartão mostra a fatura aberta; ao marcar como paga, ela vai para "Faturas pagas" (consulta e reabrir) e abre a fatura do mês seguinte.
 - **Segurança**: sem scripts de terceiros (gráfico, ícones, Supabase e CSS ficam no próprio app, pasta `vendor/` e `tailwind.css`), política de segurança de conteúdo, dados do Supabase nunca vão para o cache offline e backups/dados importados são validados.
 - **Gráfico por categoria**: lista abaixo do gráfico com valor e percentual de cada categoria no mês, mais o total.
 - **Cartões**: botões Editar e Remover em cada cartão (remover apaga as compras não pagas, com aviso antes; as pagas ficam como despesas comuns).

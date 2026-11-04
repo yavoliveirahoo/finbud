@@ -71,6 +71,8 @@
     html.light .text-violet-300 { color: #6d28d9; }
     html.light .text-fuchsia-300 { color: #a21caf; }
     html.light .active-tab { color: #059669; }
+    html.light .toast.text-emerald-50 { color: #065f46; } /* avisos legíveis no tema claro */
+    html.light .toast.text-rose-100 { color: #9f1239; }
     html.light #viewCards .text-white { color: #0f172a; } /* aba Cartões: letras brancas ficam pretas no tema claro */
     html.light .bg-emerald-500 { background-color: #10b981; }
     .theme-sun { display: inline-block; }
@@ -473,7 +475,6 @@
     <section id="viewCards" class="space-y-4 hidden">
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-base font-bold text-white">Cartões</h2>
-        <input type="month" id="cardMonth" onchange="renderCards()" class="glass-card text-xs text-slate-200 rounded-xl px-3 py-2 outline-none border border-slate-800 focus:border-emerald-500">
       </div>
 
       <form id="formCard" onsubmit="handleSaveCard(event)" class="glass-card rounded-2xl p-4 border border-slate-800 grid grid-cols-2 gap-2">
@@ -485,6 +486,9 @@
       </form>
 
       <div id="cardsList" class="space-y-3"></div>
+
+      <button type="button" id="paidFaturasBtn" onclick="togglePaidFaturas()" class="w-full glass-card p-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-700/60"></button>
+      <div id="paidFaturas" class="space-y-2 hidden"></div>
     </section>
 
     <!-- VIEW: RELATÓRIOS -->
@@ -2889,29 +2893,63 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
       });
     }
 
+    // Cada cartão mostra a fatura ABERTA. Ao pagar, ela vai para "Faturas pagas" e abre a do mês seguinte.
+    let cardViewMonth = {};      // cartão -> mês que o usuário abriu de propósito (vindo de um aviso, por exemplo)
+    let showPaidFaturas = false;
+    const faturaMonthName = ym => monthLabel(+ym.slice(0, 4), +ym.slice(5, 7) - 1).replace(' de ', ' ');
+
+    function cardFaturas(card) {
+      const map = {};
+      state.transactions.forEach(t => {
+        if (t.cardId !== card.id || t.type !== 'expense' || !t.date) return;
+        const fm = faturaOf(t.date, card);
+        const g = map[fm] || (map[fm] = { month: fm, items: [], total: 0, paidTotal: 0 });
+        g.items.push(t); g.total += t.amount; if (isPaid(t)) g.paidTotal += t.amount;
+      });
+      return Object.values(map).map(g => ({ ...g, allPaid: g.paidTotal >= g.total - 0.005 })).sort((a, b) => (a.month < b.month ? -1 : 1));
+    }
+
+    // fatura aberta = a mais antiga ainda não paga, ou o mês seguinte à última paga (o que vier primeiro)
+    function openFaturaMonth(card) {
+      const gs = cardFaturas(card);
+      const unpaid = gs.find(g => !g.allPaid);
+      const paid = gs.filter(g => g.allPaid);
+      const afterPaid = paid.length ? shiftMonthStr(paid[paid.length - 1].month, 1) : null;
+      if (unpaid && afterPaid) return unpaid.month < afterPaid ? unpaid.month : afterPaid;
+      return (unpaid && unpaid.month) || afterPaid || faturaOf(todayStr(), card);
+    }
+
     function setFaturaPaid(cardId, month, paid) {
       const card = (state.cards || []).find(c => c.id === cardId);
       if (!card) return;
       state.transactions.forEach(t => {
         if (t.cardId === cardId && faturaOf(t.date, card) === month) t.paid = paid;
       });
+      delete cardViewMonth[cardId];
       saveState();
+      if (paid) showToast(`Fatura de ${faturaMonthName(month)} paga. Abri a fatura de ${faturaMonthName(openFaturaMonth(card))}.`, 'success');
+      else showToast(`Fatura de ${faturaMonthName(month)} reaberta.`);
     }
+
+    function backToOpenFatura(cardId) { delete cardViewMonth[cardId]; renderCards(); }
+    function togglePaidFaturas() { showPaidFaturas = !showPaidFaturas; renderCards(); }
 
     function renderCards() {
       const host = document.getElementById('cardsList');
       if (!host) return;
-      const mEl = document.getElementById('cardMonth');
-      if (!mEl.value) mEl.value = todayStr().slice(0, 7);
-      const month = mEl.value;
       const cards = state.cards || [];
+      Object.keys(cardViewMonth).forEach(id => { if (!cards.some(c => c.id === id)) delete cardViewMonth[id]; });
       if (!cards.length) {
         host.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Nenhum cartão cadastrado ainda.</p>';
+        document.getElementById('paidFaturasBtn').classList.add('hidden');
+        document.getElementById('paidFaturas').classList.add('hidden');
         return;
       }
       host.innerHTML = cards.map(card => {
+        const openM = openFaturaMonth(card);
+        const month = cardViewMonth[card.id] || openM;
         const items = state.transactions
-          .filter(t => t.cardId === card.id && faturaOf(t.date, card) === month)
+          .filter(t => t.cardId === card.id && t.type === 'expense' && t.date && faturaOf(t.date, card) === month)
           .sort((a, b) => (a.date < b.date ? 1 : -1));
         const total = items.reduce((s, t) => s + t.amount, 0);
         const allPaid = items.length > 0 && items.every(t => t.paid !== false);
@@ -2925,7 +2963,10 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
         const btn = items.length
           ? `<button onclick="setFaturaPaid('${esc(card.id)}','${month}', ${!allPaid})"
                class="mt-3 w-full py-2.5 rounded-xl text-xs font-bold ${allPaid ? 'bg-slate-800 text-slate-300' : 'bg-emerald-500 text-slate-950'}">
-               ${allPaid ? 'Fatura paga ✓ (desfazer)' : 'Marcar fatura como paga'}</button>`
+               ${allPaid ? 'Fatura paga ✓ (reabrir)' : 'Marcar fatura como paga'}</button>`
+          : '';
+        const back = month !== openM
+          ? `<button type="button" onclick="backToOpenFatura('${esc(card.id)}')" class="mt-2 text-[11px] font-semibold text-emerald-400 underline">Ver a fatura aberta (${faturaMonthName(openM)})</button>`
           : '';
         return `
           <div class="glass-card rounded-2xl p-4 border border-slate-800">
@@ -2937,13 +2978,39 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
               <button type="button" onclick="startEditCard('${esc(card.id)}')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-200 border border-slate-700">Editar</button>
               <button type="button" onclick="removeCard('${esc(card.id)}')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Remover</button>
             </div>
-            <div class="mt-2">${rows}</div>
+            <div class="mt-3 text-xs font-bold text-slate-200">Fatura de ${faturaMonthName(month)} <span class="font-semibold text-slate-400">· vence ${formatDate(faturaDueDate(card, month))}</span></div>
+            <div class="mt-1">${rows}</div>
             <div class="flex justify-between mt-2 text-sm font-bold">
               <span class="text-slate-300">Total da fatura</span><span class="text-white">${formatCurrency(total)}</span>
             </div>
-            ${btn}
+            ${btn}${back}
           </div>`;
       }).join('');
+
+      // Faturas pagas (histórico para consulta)
+      const paidList = [];
+      cards.forEach(card => cardFaturas(card).filter(g => g.allPaid).forEach(g => paidList.push({ card, ...g })));
+      paidList.sort((a, b) => (a.month < b.month ? 1 : a.month > b.month ? -1 : 0));
+      const pb = document.getElementById('paidFaturasBtn'), pl = document.getElementById('paidFaturas');
+      pb.classList.remove('hidden');
+      pb.textContent = `${showPaidFaturas ? 'Ocultar' : 'Ver'} faturas pagas (${paidList.length})`;
+      pl.classList.toggle('hidden', !showPaidFaturas);
+      pl.innerHTML = !showPaidFaturas ? '' : paidList.length
+        ? paidList.map(g => `
+            <details class="glass-card rounded-2xl p-3 border border-slate-800">
+              <summary class="flex items-center justify-between gap-2 cursor-pointer text-xs">
+                <span class="font-bold text-white">${esc(g.card.name)} · ${faturaMonthName(g.month)}</span>
+                <span class="text-slate-300 font-semibold">${formatCurrency(g.total)} <span class="text-emerald-400">✓</span></span>
+              </summary>
+              <div class="mt-2 text-[11px] text-slate-400">Venceu em ${formatDate(faturaDueDate(g.card, g.month))}</div>
+              <div class="mt-1">${g.items.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).map(t => `
+                <div class="flex justify-between text-xs py-1.5 border-b border-slate-800/60">
+                  <span class="text-slate-300">${esc(t.description)} <span class="text-slate-500">${formatDate(t.date)}</span></span>
+                  <span class="text-slate-200">${formatCurrency(t.amount)}</span>
+                </div>`).join('')}</div>
+              <button type="button" onclick="setFaturaPaid('${esc(g.card.id)}','${g.month}', false)" class="mt-3 w-full py-2 rounded-xl text-[11px] font-bold bg-slate-800 text-slate-300">Reabrir esta fatura</button>
+            </details>`).join('')
+        : '<p class="text-xs text-slate-400 text-center py-4">Nenhuma fatura paga ainda.</p>';
     }
 
     function pad2(n) { return String(n).padStart(2, '0'); }
@@ -3235,8 +3302,9 @@ ${t.virtual ? `              <button onclick="payOccurrence('${t.ruleId}', '${t.
     // marca / desmarca como pago
     function goToFatura(cardId, month) {
       closeModal('modalDay');
-      document.getElementById('cardMonth').value = month;
+      if (cardId && month) cardViewMonth[cardId] = month;
       switchTab('viewCards');
+      renderCards();
     }
 
     function toggleDayItem(i) {
